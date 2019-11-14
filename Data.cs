@@ -24,26 +24,27 @@ namespace TspApp
         public struct AdjacencyMatrix
         {
             public uint[,] distances;
+            private uint matrixSize;
 
             public AdjacencyMatrix(String rawData)
             {                
-                int rowCount = 1; // starts from 1 because the matrix miss the main diagonal
+                matrixSize = 1; // starts from 1 because the matrix miss the main diagonal
                 using (StringReader sr = new StringReader(rawData))
                 {
                     // count matrix rows
                     while (sr.ReadLine() != null)
                     {
-                        rowCount += 1;
+                        matrixSize += 1;
                     }
 
                     // init the distances matrix
-                    distances = new uint[rowCount, rowCount];
+                    distances = new uint[matrixSize, matrixSize];
                 }                
 
                 // fill the matrix
                 using (StringReader sr = new StringReader(rawData))
                 {  
-                    for (int rowIdx = 0; rowIdx < rowCount - 1; rowIdx++)
+                    for (int rowIdx = 0; rowIdx < matrixSize - 1; rowIdx++)
                     {
                         var rowData = ParseRowData(sr.ReadLine());
                         for (int colIdx = 0; colIdx < rowData.Length; colIdx++)
@@ -71,6 +72,26 @@ namespace TspApp
                 }
                 
                 return rowData;
+            }
+
+            public new string ToString
+            {
+                get
+                {
+                    var sb = new StringBuilder();
+
+                    for (int r = 0; r < matrixSize; r++)
+                    {
+                        for (int c = 0; c < matrixSize; c++)
+                        {
+                            sb.Append(string.Format("{0,3} ", distances[r, c]));
+                        }
+                        // new line
+                        sb.Append(Environment.NewLine);
+                    }
+
+                    return sb.ToString();
+                }
             }
         }
     }

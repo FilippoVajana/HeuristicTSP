@@ -9,7 +9,7 @@ namespace TspApp
             var reader = new Data();
             var data = reader.ReadData();
             var distancesMatrix = reader.ParseData(data);
-            Console.WriteLine("");
+            Console.WriteLine(distancesMatrix.ToString);
         }
     }
 }
