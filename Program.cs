@@ -8,8 +8,48 @@ namespace TspApp
         static void Main(string[] args)
         {            
             string data = Data.ReadData();
-            var distancesMatrix = Data.ParseData(data);
+            Data.AdjacencyMatrix distancesMatrix = Data.ParseData(data);
             Console.WriteLine(distancesMatrix.ToString);
+
+
+            LinkedList<uint> cList = new LinkedList<uint>();
+            cList.AddLast(0);
+            cList.AddLast(1);
+
+            List<uint> fList = new List<uint>() { 2, 3 };
+
+            var newNode = new Program().SelectNextNode(distancesMatrix.distances, cList, fList);
+            Console.WriteLine(newNode);
+
+            //compute circuit cost
+            cList.AddAfter(cList.Find(newNode.Item1), newNode.Item2);
+            var cost = new Program().CircuitCost(distancesMatrix.distances, cList);
+            Console.WriteLine(cost);
+            
+        }
+
+
+        private uint CircuitCost(uint[,] distanceMatrix, LinkedList<uint> circuitList)
+        {
+            uint cost = 0;
+
+            foreach (uint node in circuitList)
+            {
+                //get next node
+                uint next;
+                if (node == circuitList.Last.Value)
+                    next = circuitList.First.Value;
+                else
+                    next = circuitList.Find(node).Next.Value;
+
+                //compute segment cost
+                var c = distanceMatrix[node, next];
+
+                //update total circuit cost
+                cost += c;
+            }
+
+            return cost;
         }
 
 
