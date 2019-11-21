@@ -5,9 +5,9 @@ using System.IO;
 
 namespace TspApp
 {
-    public class Data
+    public static class Data
     {
-        public String ReadData()
+        public static string ReadData()
         {
             using (StreamReader sr = new StreamReader("./data/bayg29.dat"))
             {
@@ -16,7 +16,7 @@ namespace TspApp
             }
         }
 
-        public AdjacencyMatrix ParseData(string rawData)
+        public static AdjacencyMatrix ParseData(string rawData)
         {
             return new AdjacencyMatrix(rawData);
         }
