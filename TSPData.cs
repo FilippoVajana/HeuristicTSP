@@ -5,14 +5,26 @@ using System.IO;
 
 namespace TspApp
 {
-    public static class Data
+    public static class TSPData
     {
         public static string ReadData()
         {
             using (StreamReader sr = new StreamReader("./data/bayg29.dat"))
             {
-                var str = sr.ReadToEnd();
+                var str = sr.ReadToEnd();                
                 return str;
+            }
+        }
+
+        public static void SaveResults(List<string> results)
+        {
+            string name = $"{DateTime.Now.Day}{DateTime.Now.Hour}{DateTime.Now.Minute}{DateTime.Now.Second}";
+            using (StreamWriter sw = System.IO.File.CreateText($"./data/results/{name}.txt"))
+            {
+                foreach (var line in results)
+                {
+                    sw.WriteLine(line);
+                }
             }
         }
 
