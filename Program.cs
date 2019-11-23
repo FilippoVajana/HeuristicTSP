@@ -74,25 +74,69 @@ namespace TspApp
             return (circuitList, CircuitCost(distances, circuitList));
         }
         
-        private (uint,uint) SelectNextNode(uint[,] distanceMatrix, LinkedList<uint> circuitList, List<uint> frontierList)
+        private List<uint> FilterFrontier(uint[,] matrix, uint currentNodId, List<uint> frontierList)
+        {
+            var filteredFrontier = new List<uint>(frontierList);
+            double[] costs = new double[filteredFrontier.Count];
+            double costsSum = 0;
+
+            //compute frontier nodes costs
+            for (int i = 0; i < filteredFrontier.Count; i++)
+            {
+                costs[i] = matrix[currentNodId, i];
+                costsSum += costs[i];
+            }
+            
+            //normalize costs
+            for (int i = 0; i < costs.Length; i++)
+            {
+                costs[i] = costs[i] / costsSum; //FIX divide by the max value
+            }
+
+            //DEBUG
+            Console.WriteLine(string.Join(' ', costs));
+
+            var random = new Random();
+            var k = random.NextDouble(); //FIX k values to big in respect to node costs
+
+            //filter normalized costs
+            for (int i = 0; i < costs.Length; i++)
+            {
+                if (k >= costs[i])
+                    filteredFrontier.Remove(frontierList[i]); //TODO check coherence between costs and frontier
+            }
+
+            //DEBUG
+            Console.WriteLine(k);
+            Console.WriteLine("Filtered frontier");
+            Console.WriteLine(string.Join(' ', filteredFrontier));
+
+            return filteredFrontier;
+        }
+
+
+        private (uint,uint) SelectNextNode(uint[,] matrix, LinkedList<uint> circuit, List<uint> frontier)
         {
             uint circuitNodeId = 0;
             uint frontierNodeId = 0;
             uint minimumAddCost = uint.MaxValue;
             
             //select a node from the circuit
-            foreach (uint circuitNode in circuitList) 
+            foreach (uint circuitNode in circuit) 
             {
                 uint circuitNextNodeId;
-                if (circuitNode == circuitList.Last.Value)
-                    circuitNextNodeId = circuitList.First.Value; //simulate a circular linked list
+                if (circuitNode == circuit.Last.Value)
+                    circuitNextNodeId = circuit.First.Value; //simulate a circular linked list
                 else
-                    circuitNextNodeId = circuitList.Find(circuitNode).Next.Value;
+                    circuitNextNodeId = circuit.Find(circuitNode).Next.Value;
+
+                //filter frontier
+                List<uint> filteredFrontier = FilterFrontier(matrix, circuitNodeId, frontier);
 
                 //select a node from the frontier
-                foreach (uint ext in frontierList) 
+                foreach (uint ext in filteredFrontier) 
                 {                    
-                    uint extAddCost = distanceMatrix[circuitNode, ext] + distanceMatrix[ext, circuitNextNodeId] - distanceMatrix[circuitNode, circuitNextNodeId];
+                    uint extAddCost = matrix[circuitNode, ext] + matrix[ext, circuitNextNodeId] - matrix[circuitNode, circuitNextNodeId];
                     if (extAddCost <= minimumAddCost)
                     {
                         //update best node so far
