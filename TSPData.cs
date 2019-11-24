@@ -19,12 +19,14 @@ namespace TspApp
         public static void SaveResults(List<string> results)
         {
             string name = $"{DateTime.Now.Day}{DateTime.Now.Hour}{DateTime.Now.Minute}{DateTime.Now.Second}";
-            using (StreamWriter sw = System.IO.File.CreateText($"./data/results/{name}.txt"))
+            var file = File.CreateText($"./data/results/{name}.txt");
+            using (StreamWriter sw = file)
             {
                 foreach (var line in results)
                 {
                     sw.WriteLine(line);
                 }
+                Console.WriteLine($"Results saved in folder: {((FileStream)(sw.BaseStream)).Name}");
             }
         }
 

@@ -14,7 +14,7 @@ namespace TspApp
             Console.WriteLine(distancesMatrix.ToString);
 
             //run the algorithm
-            int runs = 5;
+            int runs = 10;
             var runResults = new List<string>(runs * 2);
             var p = new Program();
 
@@ -77,7 +77,7 @@ namespace TspApp
             return (circuitList, CircuitCost(distances, circuitList));
         }
         
-        private List<uint> FilterFrontier(uint[,] matrix, uint currentNodId, List<uint> frontierList)
+        private static List<uint> FilterFrontier(uint[,] matrix, uint currentNodId, List<uint> frontierList)
         {
             var filteredFrontier = new List<uint>(frontierList);
             double[] costs = new double[filteredFrontier.Count];
@@ -155,7 +155,7 @@ namespace TspApp
             return (circuitNodeId, frontierNodeId);
         }
 
-        private uint CircuitCost(uint[,] distanceMatrix, LinkedList<uint> circuitList)
+        private static uint CircuitCost(uint[,] distanceMatrix, LinkedList<uint> circuitList)
         {
             uint cost = 0;
 
