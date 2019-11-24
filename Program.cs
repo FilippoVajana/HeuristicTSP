@@ -53,7 +53,7 @@ namespace TspApp
             Console.WriteLine(string.Join(' ', frontierList));            
 
 
-            for (int i = 0; i < rowsCount; i++)
+            for (int i = 0; i < rowsCount - 1; i++)
             {
                 Console.WriteLine($"Loop #{i}");
                 //select next node to add to the circuit
@@ -66,7 +66,10 @@ namespace TspApp
                 frontierList.Remove(frontierNodeId);
 
                 //DEBUG
+                Console.WriteLine("Circuit");
                 Console.WriteLine(string.Join(' ', circuitList));
+
+                Console.WriteLine("Frontier");
                 Console.WriteLine(string.Join(' ', frontierList));                
             }
 
@@ -86,30 +89,32 @@ namespace TspApp
                 costs[i] = matrix[currentNodId, i];
                 costsSum += costs[i];
             }
-            
-            //normalize costs
+
+            //rescale costs
+            var minCost = costs.Min();
+            var maxCost = costs.Max();
             for (int i = 0; i < costs.Length; i++)
             {
-                costs[i] = costs[i] / costsSum; //FIX divide by the max value
+                costs[i] = Math.Round((costs[i] - minCost) / (maxCost - minCost),3);
             }
 
             //DEBUG
-            Console.WriteLine(string.Join(' ', costs));
+            //Console.WriteLine(string.Join(' ', costs));
 
             var random = new Random();
-            var k = random.NextDouble(); //FIX k values to big in respect to node costs
+            var k = random.NextDouble();
 
             //filter normalized costs
             for (int i = 0; i < costs.Length; i++)
             {
                 if (k >= costs[i])
-                    filteredFrontier.Remove(frontierList[i]); //TODO check coherence between costs and frontier
+                    filteredFrontier.Remove(frontierList[i]);
             }
 
             //DEBUG
-            Console.WriteLine(k);
-            Console.WriteLine("Filtered frontier");
-            Console.WriteLine(string.Join(' ', filteredFrontier));
+            //Console.WriteLine(k);
+            //Console.WriteLine("Filtered frontier");
+            //Console.WriteLine(string.Join(' ', filteredFrontier));
 
             return filteredFrontier;
         }
