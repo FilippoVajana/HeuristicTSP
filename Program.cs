@@ -20,7 +20,7 @@ namespace TspApp
 
             for (int r = 0; r < runs; r++)
             {
-                var (circuit, cost) = p.Run(distancesMatrix);
+                var (circuit, cost) = p.Run(distancesMatrix.distances);
                 runResults.Add(string.Join(' ', circuit));
                 runResults.Add(cost.ToString());
             }
@@ -29,10 +29,9 @@ namespace TspApp
             TSPData.SaveResults(runResults);                        
         }
 
-        private (LinkedList<uint>, uint) Run(TSPData.AdjacencyMatrix matrix)
+        private (LinkedList<uint>, uint) Run(uint[,] distances)
         {
-            //distances matrix
-            uint[,] distances = matrix.distances;
+            //distances matrix            
             int rowsCount = (int) Math.Sqrt(distances.Length);
 
             //select starting node
@@ -77,16 +76,16 @@ namespace TspApp
             return (circuitList, CircuitCost(distances, circuitList));
         }
         
-        private static List<uint> FilterFrontier(uint[,] matrix, uint currentNodId, List<uint> frontierList)
+        private static List<uint> FilterFrontier(uint[,] distances, uint currentNode, List<uint> frontier)
         {
-            var filteredFrontier = new List<uint>(frontierList);
+            var filteredFrontier = new List<uint>(frontier);
             double[] costs = new double[filteredFrontier.Count];
             double costsSum = 0;
 
             //compute frontier nodes costs
             for (int i = 0; i < filteredFrontier.Count; i++)
             {
-                costs[i] = matrix[currentNodId, i];
+                costs[i] = distances[currentNode, i];
                 costsSum += costs[i];
             }
 
@@ -108,7 +107,7 @@ namespace TspApp
             for (int i = 0; i < costs.Length; i++)
             {
                 if (k >= costs[i])
-                    filteredFrontier.Remove(frontierList[i]);
+                    filteredFrontier.Remove(frontier[i]);
             }
 
             //DEBUG
@@ -120,7 +119,7 @@ namespace TspApp
         }
 
 
-        private (uint,uint) SelectNextNode(uint[,] matrix, LinkedList<uint> circuit, List<uint> frontier)
+        private (uint,uint) SelectNextNode(uint[,] distances, LinkedList<uint> circuit, List<uint> frontier)
         {
             uint circuitNodeId = 0;
             uint frontierNodeId = 0;
@@ -136,12 +135,12 @@ namespace TspApp
                     circuitNextNodeId = circuit.Find(circuitNode).Next.Value;
 
                 //filter frontier
-                List<uint> filteredFrontier = FilterFrontier(matrix, circuitNodeId, frontier);
+                List<uint> filteredFrontier = FilterFrontier(distances, circuitNodeId, frontier);
 
                 //select a node from the frontier
                 foreach (uint ext in filteredFrontier) 
                 {                    
-                    uint extAddCost = matrix[circuitNode, ext] + matrix[ext, circuitNextNodeId] - matrix[circuitNode, circuitNextNodeId];
+                    uint extAddCost = distances[circuitNode, ext] + distances[ext, circuitNextNodeId] - distances[circuitNode, circuitNextNodeId];
                     if (extAddCost <= minimumAddCost)
                     {
                         //update best node so far
@@ -155,21 +154,21 @@ namespace TspApp
             return (circuitNodeId, frontierNodeId);
         }
 
-        private static uint CircuitCost(uint[,] distanceMatrix, LinkedList<uint> circuitList)
+        private static uint CircuitCost(uint[,] distances, LinkedList<uint> circuit)
         {
             uint cost = 0;
 
-            foreach (uint node in circuitList)
+            foreach (uint node in circuit)
             {
                 //get next node
                 uint next;
-                if (node == circuitList.Last.Value)
-                    next = circuitList.First.Value;
+                if (node == circuit.Last.Value)
+                    next = circuit.First.Value;
                 else
-                    next = circuitList.Find(node).Next.Value;
+                    next = circuit.Find(node).Next.Value;
 
                 //compute segment cost
-                var c = distanceMatrix[node, next];
+                var c = distances[node, next];
 
                 //update total circuit cost
                 cost += c;
