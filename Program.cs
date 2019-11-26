@@ -97,23 +97,14 @@ namespace TspApp
                 costs[i] = Math.Round((costs[i] - minCost) / (maxCost - minCost),3);
             }
 
-            //DEBUG
-            //Console.WriteLine(string.Join(' ', costs));
-
+            //filter costs
             var random = new Random();
             var k = random.NextDouble();
-
-            //filter normalized costs
             for (int i = 0; i < costs.Length; i++)
             {
                 if (k >= costs[i])
                     filteredFrontier.Remove(frontier[i]);
             }
-
-            //DEBUG
-            //Console.WriteLine(k);
-            //Console.WriteLine("Filtered frontier");
-            //Console.WriteLine(string.Join(' ', filteredFrontier));
 
             return filteredFrontier;
         }
