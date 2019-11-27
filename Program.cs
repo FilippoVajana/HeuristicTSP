@@ -119,11 +119,11 @@ namespace TspApp
             //select a node from the circuit
             foreach (uint circuitNode in circuit) 
             {
-                uint circuitNextNodeId;
+                uint nextNodeId;
                 if (circuitNode == circuit.Last.Value)
-                    circuitNextNodeId = circuit.First.Value; //simulate a circular linked list
+                    nextNodeId = circuit.First.Value; //simulate a circular linked list
                 else
-                    circuitNextNodeId = circuit.Find(circuitNode).Next.Value;
+                    nextNodeId = circuit.Find(circuitNode).Next.Value;
 
                 //filter frontier
                 List<uint> filteredFrontier = FilterFrontier(distances, circuitNodeId, frontier);
@@ -131,7 +131,7 @@ namespace TspApp
                 //select a node from the frontier
                 foreach (uint ext in filteredFrontier) 
                 {                    
-                    uint extAddCost = distances[circuitNode, ext] + distances[ext, circuitNextNodeId] - distances[circuitNode, circuitNextNodeId];
+                    uint extAddCost = distances[circuitNode, ext] + distances[ext, nextNodeId] - distances[circuitNode, nextNodeId];
                     if (extAddCost <= minimumAddCost)
                     {
                         //update best node so far
