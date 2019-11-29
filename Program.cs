@@ -15,18 +15,18 @@ namespace TspApp
 
             //run the algorithm
             int runs = 10;
-            var runResults = new List<string>(runs * 2);
+            var results = new List<string>(runs * 2);
             var p = new Program();
 
             for (int r = 0; r < runs; r++)
             {
                 var (circuit, cost) = p.Run(distancesMatrix.distances);
-                runResults.Add(string.Join(' ', circuit));
-                runResults.Add(cost.ToString());
+                results.Add(string.Join(' ', circuit));
+                results.Add(cost.ToString());
             }
 
             //save the results
-            TSPData.SaveResults(runResults);                        
+            TSPData.SaveResults(results);                        
         }
 
         private (LinkedList<uint>, uint) Run(uint[,] distances)
@@ -108,8 +108,7 @@ namespace TspApp
 
             return filteredFrontier;
         }
-
-
+        
         private (uint,uint) SelectNextNode(uint[,] distances, LinkedList<uint> circuit, List<uint> frontier)
         {
             uint circuitNodeId = 0;

@@ -56,9 +56,9 @@ def plot(cities_pos, result, ax):
 
 if __name__ == '__main__':
     print(os.getcwd())
-    cities_pos = read_cities_pos("./data/bayg29_pos.dat")
+    cities_pos = read_cities_pos("bayg29_pos.dat")
 
-    files = [os.path.normpath(f) for f in glob.glob("./data/results/" + "*.txt", recursive=False)]
+    files = [os.path.normpath(f) for f in glob.glob("results/" + "*.txt", recursive=False)]
     files.sort()
     results = read_results(files[-1])
 
