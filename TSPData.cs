@@ -35,6 +35,7 @@ namespace TspApp
             return new AdjacencyMatrix(rawData);
         }
 
+
         public struct AdjacencyMatrix
         {
             public uint[,] distances;
