@@ -7,14 +7,16 @@ namespace TspApp
     class Program
     {
         static void Main(string[] args)
-        {            
+        {
+            Program.Experiment();
+
             //load and parse data
             string data = TSPData.ReadData();
             TSPData.AdjacencyMatrix distancesMatrix = TSPData.ParseData(data);
             Console.WriteLine(distancesMatrix.ToString);
 
             //run the algorithm
-            int runs = 10;
+            int runs = 200;
             var results = new List<string>(runs * 2);
             var p = new Program();
 
@@ -28,6 +30,43 @@ namespace TspApp
             //save the results
             TSPData.SaveResults(results);                        
         }
+
+        private static void Experiment()
+        {
+            var str = "0 12 0 14 15 0 65 85 74 0";
+            var splitted = str.Split(' ');
+
+            int[,] matrix = new int[4, 4];
+            int row = 0, col = 0;
+
+            foreach (var e in splitted)
+            {
+                if (e == "0")
+                {
+                    row++;
+                    col = 0;
+                }
+                else
+                {
+                    matrix[row, col] = int.Parse(e);
+                    matrix[col, row] = int.Parse(e);
+                    col++;
+                }
+            }
+
+            // print matrix
+            for (int i = 0; i < matrix.GetLength(0); i++)
+            {
+                for (int j = 0; j < matrix.GetLength(0); j++)
+                {
+                    Console.Write(string.Format("{0,2} ", matrix[i, j]));
+                }
+                Console.WriteLine();
+            }
+
+            Environment.Exit(0);
+        }
+
 
         private (LinkedList<uint>, uint) Run(uint[,] distances)
         {
