@@ -2,12 +2,18 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace TspApp
 {
     public class TSPData
     {
         private string sourceDirPath, instancesDirPath, resultsDirPath;
+        private Func<(int, int), (int, int), uint> EuclideanDistance = (a, b) =>
+        {
+            var dist = Math.Sqrt(Math.Pow((a.Item1 - b.Item1), 2) + Math.Pow((a.Item2 - b.Item2), 2));
+            return (uint)dist;
+        };
 
         public TSPData(string sourceDirPath, string instancesDirPath, string resultsDirPath)
         {
@@ -29,6 +35,37 @@ namespace TspApp
 
                 return result;
             }
+        }
+        public uint[,] MatrixFrom2DPos(int size, string rawData)
+        {
+            var distanceDict = new Dictionary<int, (int, int)>(size);
+
+            using (StringReader sr = new StringReader(rawData))
+            {
+                // parse 2D positions
+                var rowPattern = @"\d+";
+                while (sr.Peek() != -1)
+                {
+                    var match = Regex.Matches(sr.ReadLine(), rowPattern);
+                    distanceDict.Add(
+                        int.Parse(match[0].Value),
+                        (int.Parse(match[1].Value), int.Parse(match[2].Value))
+                        );
+                }
+            }
+
+            // build distance matrix
+            uint[,] matrix = new uint[size, size];
+            foreach (var startNode in distanceDict.Keys)
+            {
+                foreach (var endNode in distanceDict.Keys)
+                {
+                    var distance = EuclideanDistance(distanceDict[startNode], distanceDict[endNode]);
+                    matrix[startNode - 1, endNode - 1] = matrix[endNode - 1, startNode - 1] = distance;                    
+                }
+            }
+
+            return matrix;
         }
 
         
@@ -93,7 +130,7 @@ namespace TspApp
             {
                 // get values using regular expression
                 String pattern = @"\d+";
-                var matches = System.Text.RegularExpressions.Regex.Matches(data, pattern);
+                var matches = Regex.Matches(data, pattern);
 
                 // init data array
                 uint[] rowData = new uint[matches.Count];

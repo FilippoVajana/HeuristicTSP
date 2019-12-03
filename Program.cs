@@ -8,27 +8,43 @@ namespace TspApp
     {
         static void Main(string[] args)
         {
-            Program.Experiment();
+            //Program.Experiment();
 
-            //load and parse data
-            string data = TSPData.ReadData();
-            TSPData.AdjacencyMatrix distancesMatrix = TSPData.ParseData(data);
-            Console.WriteLine(distancesMatrix.ToString);
+            var data = new TSPData(null, null, null);
+            var rawData = data.ReadData("./data/source/att48.tsp");
+            var parsedData = data.MatrixFrom2DPos(int.Parse(rawData[0]), rawData[2]);
 
-            //run the algorithm
-            int runs = 200;
-            var results = new List<string>(runs * 2);
-            var p = new Program();
-
-            for (int r = 0; r < runs; r++)
+            // print matrix
+            for (int i = 0; i < parsedData.GetLength(0); i++)
             {
-                var (circuit, cost) = p.Run(distancesMatrix.distances);
-                results.Add(string.Join(' ', circuit));
-                results.Add(cost.ToString());
+                for (int j = 0; j < parsedData.GetLength(0); j++)
+                {
+                    Console.Write(string.Format("{0,4} ", parsedData[i, j]));
+                }
+                Console.WriteLine();
             }
 
-            //save the results
-            TSPData.SaveResults(results);                        
+
+
+            ////load and parse data
+            //string data = new TSPData(null, null, null).ReadData(null);
+            //TSPData.AdjacencyMatrix distancesMatrix = TSPData.ParseData(data);
+            //Console.WriteLine(distancesMatrix.ToString);
+
+            ////run the algorithm
+            //int runs = 200;
+            //var results = new List<string>(runs * 2);
+            //var p = new Program();
+
+            //for (int r = 0; r < runs; r++)
+            //{
+            //    var (circuit, cost) = p.Run(distancesMatrix.distances);
+            //    results.Add(string.Join(' ', circuit));
+            //    results.Add(cost.ToString());
+            //}
+
+            ////save the results
+            //TSPData.SaveResults(results);                        
         }
 
         private static void Experiment()
@@ -63,8 +79,6 @@ namespace TspApp
                 }
                 Console.WriteLine();
             }
-
-            Environment.Exit(0);
         }
 
 
