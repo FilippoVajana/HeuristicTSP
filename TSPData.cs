@@ -5,8 +5,17 @@ using System.IO;
 
 namespace TspApp
 {
-    public static class TSPData
+    public class TSPData
     {
+        private string sourceDirPath, instancesDirPath, resultsDirPath;
+
+        public TSPData(string sourceDirPath, string instancesDirPath, string resultsDirPath)
+        {
+            this.sourceDirPath = sourceDirPath;
+            this.instancesDirPath = instancesDirPath;
+            this.resultsDirPath = resultsDirPath;
+        }
+
         public static string ReadData()
         {
             using (StreamReader sr = new StreamReader("./data/bayg29.dat"))
@@ -15,6 +24,9 @@ namespace TspApp
                 return str;
             }
         }
+
+        
+
 
         public static void SaveResults(List<string> results)
         {
