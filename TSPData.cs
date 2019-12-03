@@ -16,12 +16,18 @@ namespace TspApp
             this.resultsDirPath = resultsDirPath;
         }
 
-        public static string ReadData()
+        public string[] ReadData(string filePath)
         {
-            using (StreamReader sr = new StreamReader("./data/bayg29.dat"))
+            using (StreamReader sr = new StreamReader(filePath))
             {
-                var str = sr.ReadToEnd();                
-                return str;
+                var result = new string[3];
+
+                // parse source file
+                result[0] = sr.ReadLine();  //node count
+                result[1] = sr.ReadLine();  //data format
+                result[2] = sr.ReadToEnd(); //data
+
+                return result;
             }
         }
 
