@@ -4,6 +4,7 @@ using System.Text;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Linq;
+using GeoCoordinatePortable;
 
 namespace TspApp
 {
@@ -15,7 +16,17 @@ namespace TspApp
             var dist = Math.Sqrt(Math.Pow((a.Item1 - b.Item1), 2) + Math.Pow((a.Item2 - b.Item2), 2));
             return (uint)dist;
         };
+        private readonly Func<(double, double), (double, double), uint> GeographicalDistance = (a, b) =>
+        {
+            var aCoord = new GeoCoordinate(a.Item1, a.Item2);
+            var bCoord = new GeoCoordinate(b.Item1, b.Item2);
 
+            // compute distance in kilometers
+            var dist = aCoord.GetDistanceTo(bCoord) / 1000;
+
+            return (uint)dist;
+        };
+        
         public TSPData(string sourceDirPath, string instancesDirPath, string resultsDirPath)
         {
             this.sourceDirPath = sourceDirPath;
@@ -77,18 +88,23 @@ namespace TspApp
         #endregion
 
         private void PrintMatrix(uint[,] matrix)
-        {            
-            for (int i = 0; i < matrix.GetLength(0); i++)
+        {
+            // get max digits
+            var maxDigits = matrix.Cast<uint>().Max().ToString().Length;
+
+            // get edge size
+            var size = matrix.GetLength(0);
+
+            for (int i = 0; i < size; i++)
             {
-                for (int j = 0; j < matrix.GetLength(0); j++)
+                for (int j = 0; j < size; j++)
                 {
-                    Console.Write(string.Format("{0,4} ", matrix[i, j]));
+                    Console.Write(string.Format($"{{0,{maxDigits}}} ", matrix[i, j]));
                 }
                 Console.WriteLine();
             }
         }
-
-
+        
 
         public uint[,] MatrixFrom2DPos(int size, string rawData)
         {
@@ -100,16 +116,17 @@ namespace TspApp
                 var rowPattern = @"\d+";
                 while (sr.Peek() != -1)
                 {
-                    var match = Regex.Matches(sr.ReadLine(), rowPattern);
+                    var matches = Regex.Matches(sr.ReadLine(), rowPattern);
                     distanceDict.Add(
-                        int.Parse(match[0].Value),
-                        (int.Parse(match[1].Value), int.Parse(match[2].Value))
+                        int.Parse(matches[0].Value),
+                        (int.Parse(matches[1].Value), int.Parse(matches[2].Value))
                         );
                 }
             }
 
             // build distance matrix
             uint[,] matrix = new uint[size, size];
+
             foreach (var startNode in distanceDict.Keys)
             {
                 foreach (var endNode in distanceDict.Keys)
@@ -133,8 +150,8 @@ namespace TspApp
                 {
                     // parse row values
                     var rowPattern = @"\d+";
-                    var match = Regex.Matches(sr.ReadLine(), rowPattern);
-                    var data = match.ToArray();
+                    var matches = Regex.Matches(sr.ReadLine(), rowPattern);
+                    var data = matches.ToArray();
 
                     for (int c = r + 1; c < size; c++)
                     {
@@ -147,8 +164,68 @@ namespace TspApp
             return matrix;
         }
         
+        public uint[,] MatrixFromComplete(int size, string rawData)
+        {
+            uint[,] matrix = new uint[size, size];
 
+            // build matrix
+            using (StringReader sr = new StringReader(rawData))
+            {
+                var rowPattern = @"\d+";
+                for (int r = 0; r < size; r++)
+                {
+                    var matches = Regex.Matches(sr.ReadLine(), rowPattern);
+                    for (int c = 0; c < size; c++)
+                    {
+                        matrix[r, c] = uint.Parse(matches[c].Value);
+                        matrix[c, r] = uint.Parse(matches[c].Value);
+                    }
+                }
+            }
+            
+            return matrix;
+        }
         
+        public uint[,] MatrixFromGeo(int size, string rawData)
+        {
+            var distanceDict = new Dictionary<int, (double, double)>(size);
+
+            using (StringReader sr = new StringReader(rawData))
+            {
+                // parse 2D positions                
+                while (sr.Peek() != -1)
+                {
+                    var row = sr.ReadLine();
+                    var data = row.Split(' ')
+                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                        .ToArray();
+
+                    distanceDict.Add(
+                        int.Parse(data[0]),
+                        (double.Parse(data[1]), double.Parse(data[2]))
+                        );
+                }
+            }
+
+            // build distance matrix
+            uint[,] matrix = new uint[size, size];
+
+            foreach (var startNode in distanceDict.Keys)
+            {
+                foreach (var endNode in distanceDict.Keys)
+                {
+                    var distance = GeographicalDistance(distanceDict[startNode], distanceDict[endNode]);
+                    matrix[startNode - 1, endNode - 1] = distance;
+                    matrix[endNode - 1, startNode - 1] = distance;
+                }
+            }
+            
+            return matrix;
+        }
+
+
+
+
 
         public static AdjacencyMatrix ParseData(string rawData)
         {
