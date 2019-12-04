@@ -223,7 +223,39 @@ namespace TspApp
             return matrix;
         }
 
+        public uint[,] MatrixFromLowerRow(int size, string rawData)
+        {
+            uint[,] matrix = new uint[size, size];
 
+            // build matrix
+            using (StringReader sr = new StringReader(rawData))
+            {
+                int r = 0;
+                int c = 0;
+                var valuePattern = @"\d+";
+
+                while (sr.Peek() != -1)
+                {
+                    var str = sr.ReadLine();
+                    var value = Regex.Match(str, valuePattern).Value;
+
+                    matrix[r, c] = uint.Parse(value);
+                    matrix[c, r] = uint.Parse(value);
+
+                    if (value == "0")
+                    {
+                        r++;
+                        c = 0;
+                    }
+                    else
+                    {
+                        c++;
+                    }
+                }                
+            }
+
+            return matrix;
+        }
 
 
 
