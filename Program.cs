@@ -10,19 +10,19 @@ namespace TspApp
         {
             //Program.Experiment();
 
-            var data = new TSPData(null, null, null);
-            var rawData = data.ReadData("./data/source/att48.tsp");
+            var data = new TSPData("./data/source", "./data/instances", "./data/results");
+            var rawData = data.ReadData("att48.tsp");
             var parsedData = data.MatrixFrom2DPos(int.Parse(rawData[0]), rawData[2]);
 
             // print matrix
-            for (int i = 0; i < parsedData.GetLength(0); i++)
-            {
-                for (int j = 0; j < parsedData.GetLength(0); j++)
-                {
-                    Console.Write(string.Format("{0,4} ", parsedData[i, j]));
-                }
-                Console.WriteLine();
-            }
+            //for (int i = 0; i < parsedData.GetLength(0); i++)
+            //{
+            //    for (int j = 0; j < parsedData.GetLength(0); j++)
+            //    {
+            //        Console.Write(string.Format("{0,4} ", parsedData[i, j]));
+            //    }
+            //    Console.WriteLine();
+            //}
 
 
 

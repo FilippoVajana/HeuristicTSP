@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace TspApp
 {
     public class TSPData
     {
         private string sourceDirPath, instancesDirPath, resultsDirPath;
-        private Func<(int, int), (int, int), uint> EuclideanDistance = (a, b) =>
+        private readonly Func<(int, int), (int, int), uint> EuclideanDistance = (a, b) =>
         {
             var dist = Math.Sqrt(Math.Pow((a.Item1 - b.Item1), 2) + Math.Pow((a.Item2 - b.Item2), 2));
             return (uint)dist;
@@ -22,9 +23,9 @@ namespace TspApp
             this.resultsDirPath = resultsDirPath;
         }
 
-        public string[] ReadData(string filePath)
+        public string[] ReadData(string name)
         {
-            using (StreamReader sr = new StreamReader(filePath))
+            using (StreamReader sr = new StreamReader(Path.Combine(sourceDirPath, name)))
             {
                 var result = new string[3];
 
@@ -65,7 +66,32 @@ namespace TspApp
                 }
             }
 
+            SaveMatrix(matrix, "att48_mat.dat");
             return matrix;
+        }
+
+        private void SaveMatrix(uint [,] matrix, string name)
+        {
+            // get max digits
+            var maxDigits = matrix.Cast<uint>().Max().ToString().Length;
+
+            // get edge size
+            var size = matrix.GetLength(0);
+
+            // build matrix string
+            StringBuilder sb = new StringBuilder();            
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < size; j++)
+                {                    
+                    sb.AppendFormat($"{{0,{maxDigits}}} ", matrix[i, j]);
+                }
+                if (i == size - 1)
+                    break;
+                sb.AppendLine();
+            }
+
+            File.WriteAllText(Path.Combine(instancesDirPath, name), sb.ToString());
         }
 
         
