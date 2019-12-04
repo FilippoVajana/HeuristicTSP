@@ -87,7 +87,7 @@ namespace TspApp
         } 
         #endregion
 
-        private void PrintMatrix(uint[,] matrix)
+        public static void PrintMatrix(uint[,] matrix)
         {
             // get max digits
             var maxDigits = matrix.Cast<uint>().Max().ToString().Length;
@@ -222,42 +222,38 @@ namespace TspApp
             
             return matrix;
         }
-
+                
         public uint[,] MatrixFromLowerRow(int size, string rawData)
         {
             uint[,] matrix = new uint[size, size];
 
-            // build matrix
-            using (StringReader sr = new StringReader(rawData))
+            // get row data
+            rawData = rawData.Replace("\n", " ");
+            var rowsData = rawData.Split(" ")
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToArray();
+
+            int r = 0;
+            int c = 0;
+
+            foreach (var v in rowsData)
             {
-                int r = 0;
-                int c = 0;
-                var valuePattern = @"\d+";
+                matrix[r, c] = uint.Parse(v);
+                matrix[c, r] = uint.Parse(v);
 
-                while (sr.Peek() != -1)
+                if (v == "0")
                 {
-                    var str = sr.ReadLine();
-                    var value = Regex.Match(str, valuePattern).Value;
-
-                    matrix[r, c] = uint.Parse(value);
-                    matrix[c, r] = uint.Parse(value);
-
-                    if (value == "0")
-                    {
-                        r++;
-                        c = 0;
-                    }
-                    else
-                    {
-                        c++;
-                    }
-                }                
+                    r++;
+                    c = 0;
+                }
+                else
+                {
+                    c++;
+                }
             }
 
             return matrix;
         }
-
-
 
         public static AdjacencyMatrix ParseData(string rawData)
         {

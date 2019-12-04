@@ -10,11 +10,13 @@ namespace TspApp
         {
             var data = new TSPData("./data/source", "./data/instances", "./data/results");
 
-            var rawData = data.ReadSourceData("fri26.tsp");
+            var rawData = data.ReadSourceData("st70.tsp");
 
-            var matrix = data.MatrixFromLowerRow(int.Parse(rawData[0]), rawData[2]);
+            var matrix = data.MatrixFrom2DPos(int.Parse(rawData[0]), rawData[2]);
 
-            data.SaveMatrix(matrix, "fri26_mat.dat");
+            TSPData.PrintMatrix(matrix);
+
+            data.SaveMatrix(matrix, "st70_mat.dat");
 
 
             ////load and parse data
