@@ -8,22 +8,13 @@ namespace TspApp
     {
         static void Main(string[] args)
         {
-            //Program.Experiment();
-
             var data = new TSPData("./data/source", "./data/instances", "./data/results");
-            var rawData = data.ReadData("att48.tsp");
-            var parsedData = data.MatrixFrom2DPos(int.Parse(rawData[0]), rawData[2]);
 
-            // print matrix
-            //for (int i = 0; i < parsedData.GetLength(0); i++)
-            //{
-            //    for (int j = 0; j < parsedData.GetLength(0); j++)
-            //    {
-            //        Console.Write(string.Format("{0,4} ", parsedData[i, j]));
-            //    }
-            //    Console.WriteLine();
-            //}
+            var rawData = data.ReadSourceData("bayg29.tsp");
 
+            var matrix = data.MatrixFromUpperRow(int.Parse(rawData[0]), rawData[2]);
+
+            data.SaveMatrix(matrix, "bayg29_mat.dat");
 
 
             ////load and parse data
@@ -46,41 +37,6 @@ namespace TspApp
             ////save the results
             //TSPData.SaveResults(results);                        
         }
-
-        private static void Experiment()
-        {
-            var str = "0 12 0 14 15 0 65 85 74 0";
-            var splitted = str.Split(' ');
-
-            int[,] matrix = new int[4, 4];
-            int row = 0, col = 0;
-
-            foreach (var e in splitted)
-            {
-                if (e == "0")
-                {
-                    row++;
-                    col = 0;
-                }
-                else
-                {
-                    matrix[row, col] = int.Parse(e);
-                    matrix[col, row] = int.Parse(e);
-                    col++;
-                }
-            }
-
-            // print matrix
-            for (int i = 0; i < matrix.GetLength(0); i++)
-            {
-                for (int j = 0; j < matrix.GetLength(0); j++)
-                {
-                    Console.Write(string.Format("{0,2} ", matrix[i, j]));
-                }
-                Console.WriteLine();
-            }
-        }
-
 
         private (LinkedList<uint>, uint) Run(uint[,] distances)
         {

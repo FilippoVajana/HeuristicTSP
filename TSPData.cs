@@ -23,7 +23,8 @@ namespace TspApp
             this.resultsDirPath = resultsDirPath;
         }
 
-        public string[] ReadData(string name)
+        #region File IO
+        public string[] ReadSourceData(string name)
         {
             using (StreamReader sr = new StreamReader(Path.Combine(sourceDirPath, name)))
             {
@@ -37,6 +38,58 @@ namespace TspApp
                 return result;
             }
         }
+        public void SaveMatrix(uint[,] matrix, string name)
+        {
+            // get max digits
+            var maxDigits = matrix.Cast<uint>().Max().ToString().Length;
+
+            // get edge size
+            var size = matrix.GetLength(0);
+
+            // build matrix string
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < size; j++)
+                {
+                    sb.AppendFormat($"{{0,{maxDigits}}} ", matrix[i, j]);
+                }
+                if (i == size - 1)
+                    break;
+                sb.AppendLine();
+            }
+
+            File.WriteAllText(Path.Combine(instancesDirPath, name), sb.ToString());
+        }
+        public void SaveResults(List<string> results)
+        {
+            string name = $"{DateTime.Now.Day}{DateTime.Now.Hour}{DateTime.Now.Minute}{DateTime.Now.Second}";
+            var file = File.CreateText(Path.Combine(resultsDirPath, $"{name}.txt"));
+            using (StreamWriter sw = file)
+            {
+                foreach (var line in results)
+                {
+                    sw.WriteLine(line);
+                }
+                Console.WriteLine($"Results saved in folder: {((FileStream)(sw.BaseStream)).Name}");
+            }
+        } 
+        #endregion
+
+        private void PrintMatrix(uint[,] matrix)
+        {            
+            for (int i = 0; i < matrix.GetLength(0); i++)
+            {
+                for (int j = 0; j < matrix.GetLength(0); j++)
+                {
+                    Console.Write(string.Format("{0,4} ", matrix[i, j]));
+                }
+                Console.WriteLine();
+            }
+        }
+
+
+
         public uint[,] MatrixFrom2DPos(int size, string rawData)
         {
             var distanceDict = new Dictionary<int, (int, int)>(size);
@@ -66,50 +119,36 @@ namespace TspApp
                 }
             }
 
-            SaveMatrix(matrix, "att48_mat.dat");
             return matrix;
         }
 
-        private void SaveMatrix(uint [,] matrix, string name)
+        public uint[,] MatrixFromUpperRow(int size, string rawData)
         {
-            // get max digits
-            var maxDigits = matrix.Cast<uint>().Max().ToString().Length;
+            uint[,] matrix = new uint[size, size];
 
-            // get edge size
-            var size = matrix.GetLength(0);
-
-            // build matrix string
-            StringBuilder sb = new StringBuilder();            
-            for (int i = 0; i < size; i++)
+            // build matrix
+            using (StringReader sr = new StringReader(rawData))
             {
-                for (int j = 0; j < size; j++)
-                {                    
-                    sb.AppendFormat($"{{0,{maxDigits}}} ", matrix[i, j]);
-                }
-                if (i == size - 1)
-                    break;
-                sb.AppendLine();
+                for (int r = 0; r < size - 1; r++)
+                {
+                    // parse row values
+                    var rowPattern = @"\d+";
+                    var match = Regex.Matches(sr.ReadLine(), rowPattern);
+                    var data = match.ToArray();
+
+                    for (int c = r + 1; c < size; c++)
+                    {
+                        matrix[r, c] = uint.Parse(data[c - r - 1].Value);
+                        matrix[c, r] = uint.Parse(data[c - r - 1].Value);
+                    }
+                } 
             }
 
-            File.WriteAllText(Path.Combine(instancesDirPath, name), sb.ToString());
+            return matrix;
         }
-
         
 
-
-        public static void SaveResults(List<string> results)
-        {
-            string name = $"{DateTime.Now.Day}{DateTime.Now.Hour}{DateTime.Now.Minute}{DateTime.Now.Second}";
-            var file = File.CreateText($"./data/results/{name}.txt");
-            using (StreamWriter sw = file)
-            {
-                foreach (var line in results)
-                {
-                    sw.WriteLine(line);
-                }
-                Console.WriteLine($"Results saved in folder: {((FileStream)(sw.BaseStream)).Name}");
-            }
-        }
+        
 
         public static AdjacencyMatrix ParseData(string rawData)
         {
