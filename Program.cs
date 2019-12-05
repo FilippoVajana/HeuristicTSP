@@ -1,42 +1,63 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 
 namespace TspApp
 {
     class Program
     {
+        /// <summary>
+        /// att48_mat.dat
+        /// bayg29_mat.dat
+        /// bays29_mat.dat
+        /// berlin52_mat.dat
+        /// burma14_mat.dat
+        /// fri26_mat.dat
+        /// gr21_mat.dat
+        /// gr24_mat.dat
+        /// pr76_mat.dat
+        /// st70_mat.dat
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
             var data = new TSPData("./data/source", "./data/instances", "./data/results");
+            var p = new Program();
+
+            //// prepare instance data
+            //data.PrepareInstanceData(null);
 
 
+            //load and parse data            
+            uint[,] matrix = data.LoadMatrix("st70_mat.dat");
+            TSPData.PrintMatrix(matrix);
 
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
 
+            //run the algorithm
+            int runs = 10;
+            var results = new List<string>(runs * 2);
 
+            for (int r = 0; r < runs; r++)
+            {
+                var (circuit, cost) = p.RunHeuristic(matrix);
+                results.Add(string.Join(' ', circuit));
+                results.Add(cost.ToString());
+            }
 
-            ////load and parse data
-            //string data = new TSPData(null, null, null).ReadData(null);
-            //TSPData.AdjacencyMatrix distancesMatrix = TSPData.ParseData(data);
-            //Console.WriteLine(distancesMatrix.ToString);
-
-            ////run the algorithm
-            //int runs = 200;
-            //var results = new List<string>(runs * 2);
-            //var p = new Program();
-
-            //for (int r = 0; r < runs; r++)
-            //{
-            //    var (circuit, cost) = p.Run(distancesMatrix.distances);
-            //    results.Add(string.Join(' ', circuit));
-            //    results.Add(cost.ToString());
-            //}
+            // get execution time
+            stopwatch.Stop();
+            var ts = stopwatch.Elapsed;
+            string elapsedTime = string.Format("{0:00}:{1:00}", ts.Seconds, ts.Milliseconds / 10);
+            Console.WriteLine("RunTime " + elapsedTime);
 
             ////save the results
             //TSPData.SaveResults(results);                        
         }
 
-        private (LinkedList<uint>, uint) Run(uint[,] distances)
+        private (LinkedList<uint>, uint) RunHeuristic(uint[,] distances)
         {
             //distances matrix            
             int rowsCount = (int) Math.Sqrt(distances.Length);

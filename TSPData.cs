@@ -72,6 +72,37 @@ namespace TspApp
 
             File.WriteAllText(Path.Combine(instancesDirPath, name), sb.ToString());
         }
+        
+        public uint[,] LoadMatrix(string instanceFilename)
+        {
+            using (StreamReader sr = new StreamReader(Path.Combine(instancesDirPath, instanceFilename)))
+            {
+                // read and convert data
+                var data = sr.ReadToEnd()
+                    .Replace(Environment.NewLine, " ")
+                    .Split(" ")
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Select(uint.Parse)
+                    .ToArray();
+
+                // get matrix edge size
+                var size = (int)Math.Sqrt(data.Length);
+                
+                // build matrix
+                var matrix = new uint[size, size];
+
+                for (int r = 0; r < size; r++)
+                {
+                    for (int c = 0; c < size; c++)
+                    {
+                        matrix[r, c] = data[r * size + c];
+                    }
+                }
+                
+                return matrix;
+            }            
+        }
+        
         public void SaveResults(List<string> results)
         {
             string name = $"{DateTime.Now.Day}{DateTime.Now.Hour}{DateTime.Now.Minute}{DateTime.Now.Second}";
@@ -84,9 +115,11 @@ namespace TspApp
                 }
                 Console.WriteLine($"Results saved in folder: {((FileStream)(sw.BaseStream)).Name}");
             }
-        } 
+        }
         #endregion
 
+
+        #region Helper Functions
         public static void PrintMatrix(uint[,] matrix)
         {
             // get max digits
@@ -104,7 +137,7 @@ namespace TspApp
                 Console.WriteLine();
             }
         }
-        
+
         public void PrepareInstanceData(string sourceFilename)
         {
             // read data
@@ -118,8 +151,11 @@ namespace TspApp
 
             // save matrix file
             SaveMatrix(matrix, $"{sourceFilename.Replace(".tsp", string.Empty)}_mat.dat");
-        }
+        } 
+        #endregion
 
+
+        #region Parsing Data
         public uint[,] MatrixFrom2DPos(int size, string rawData)
         {
             var distanceDict = new Dictionary<int, (int, int)>(size);
@@ -146,7 +182,7 @@ namespace TspApp
                 foreach (var endNode in distanceDict.Keys)
                 {
                     var distance = EuclideanDistance(distanceDict[startNode], distanceDict[endNode]);
-                    matrix[startNode - 1, endNode - 1] = matrix[endNode - 1, startNode - 1] = distance;                    
+                    matrix[startNode - 1, endNode - 1] = matrix[endNode - 1, startNode - 1] = distance;
                 }
             }
 
@@ -172,12 +208,12 @@ namespace TspApp
                         matrix[r, c] = uint.Parse(data[c - r - 1].Value);
                         matrix[c, r] = uint.Parse(data[c - r - 1].Value);
                     }
-                } 
+                }
             }
 
             return matrix;
         }
-        
+
         public uint[,] MatrixFromComplete(int size, string rawData)
         {
             uint[,] matrix = new uint[size, size];
@@ -196,10 +232,10 @@ namespace TspApp
                     }
                 }
             }
-            
+
             return matrix;
         }
-        
+
         public uint[,] MatrixFromGeo(int size, string rawData)
         {
             var distanceDict = new Dictionary<int, (double, double)>(size);
@@ -233,10 +269,10 @@ namespace TspApp
                     matrix[endNode - 1, startNode - 1] = distance;
                 }
             }
-            
+
             return matrix;
         }
-                
+
         public uint[,] MatrixFromLowerRow(int size, string rawData)
         {
             uint[,] matrix = new uint[size, size];
@@ -267,14 +303,17 @@ namespace TspApp
             }
 
             return matrix;
-        }
+        } 
+        #endregion
+
+
+
 
         public static AdjacencyMatrix ParseData(string rawData)
         {
             return new AdjacencyMatrix(rawData);
         }
-
-
+        
         public struct AdjacencyMatrix
         {
             public uint[,] distances;
