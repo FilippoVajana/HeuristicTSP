@@ -105,6 +105,20 @@ namespace TspApp
             }
         }
         
+        public void PrepareInstanceData(string sourceFilename)
+        {
+            // read data
+            var rawData = ReadSourceData(sourceFilename);
+
+            // parse data
+            var matrix = MatrixFrom2DPos(int.Parse(rawData[0]), rawData[2]);
+
+            // print matrix
+            PrintMatrix(matrix);
+
+            // save matrix file
+            SaveMatrix(matrix, $"{sourceFilename.Replace(".tsp", string.Empty)}_mat.dat");
+        }
 
         public uint[,] MatrixFrom2DPos(int size, string rawData)
         {
