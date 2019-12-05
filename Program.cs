@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
+using System.IO;
 
 namespace TspApp
 {
@@ -24,83 +25,93 @@ namespace TspApp
         {
             var data = new TSPData("./data/source", "./data/instances", "./data/results");
             var p = new Program();
+            var instances = new DirectoryInfo("./data/instances")
+                .GetFiles("*_mat.dat")
+                .Select(x => x.Name)
+                .ToArray();            
 
             //// prepare instance data
             //data.PrepareInstanceData(null);
-
-
-            //load and parse data            
-            uint[,] matrix = data.LoadMatrix("st70_mat.dat");
-            TSPData.PrintMatrix(matrix);
-
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
-
-            //run the algorithm
-            int runs = 10;
-            var results = new List<string>(runs * 2);
-
-            for (int r = 0; r < runs; r++)
+            
+            // run on all the instances
+            var runsCount = 100;
+            var results = new Dictionary<string, List<string>>(instances.Length);
+            
+            foreach (var instanceName in instances)
             {
-                var (circuit, cost) = p.RunHeuristic(matrix);
-                results.Add(string.Join(' ', circuit));
-                results.Add(cost.ToString());
+                // load and parse data            
+                uint[,] matrix = data.LoadMatrix(instanceName);                       
+
+                // run the algorithm                
+                var instanceResult = new List<string>(runsCount * 2);
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+
+                for (int r = 0; r < runsCount; r++)
+                {
+                    var (circuit, cost) = p.RunHeuristic(matrix);
+                    instanceResult.Add(string.Join(' ', circuit));
+                    instanceResult.Add(cost.ToString());
+                }
+
+                // get execution time
+                stopwatch.Stop();
+                var ts = stopwatch.Elapsed;
+                string elapsedTime = string.Format("{0:00}:{1:00}", ts.Seconds, ts.Milliseconds / 10);
+                Console.WriteLine($"{instanceName} RunTime " + elapsedTime);
+
+                // add instance results to the overall results dictionary
+                results.Add(instanceName, instanceResult);
             }
-
-            // get execution time
-            stopwatch.Stop();
-            var ts = stopwatch.Elapsed;
-            string elapsedTime = string.Format("{0:00}:{1:00}", ts.Seconds, ts.Milliseconds / 10);
-            Console.WriteLine("RunTime " + elapsedTime);
-
-            ////save the results
-            //TSPData.SaveResults(results);                        
+            
+            // save overall results
+            string folderName = $"{DateTime.Now.Day}{DateTime.Now.Hour}{DateTime.Now.Minute}";
+            data.SaveResults(results, folderName);            
         }
 
         private (LinkedList<uint>, uint) RunHeuristic(uint[,] distances)
         {
-            //distances matrix            
+            // distances matrix            
             int rowsCount = (int) Math.Sqrt(distances.Length);
 
-            //select starting node
+            // select starting node
             var random = new Random();
             uint startNode = (uint) random.Next(maxValue: (int) rowsCount);
 
-            //init circuit
+            // init circuit
             LinkedList<uint> circuitList = new LinkedList<uint>();
             circuitList.AddFirst(startNode);
 
-            //init frontier
+            // init frontier
             var range = Enumerable.Range(0, rowsCount).ToList().ConvertAll(x => (uint) x);
             List<uint> frontierList = new List<uint>(range);
             frontierList.Remove(startNode);
 
             //DEBUG
-            Console.WriteLine(string.Join(' ', circuitList));
-            Console.WriteLine(string.Join(' ', frontierList));            
+            //Console.WriteLine(string.Join(' ', circuitList));
+            //Console.WriteLine(string.Join(' ', frontierList));            
 
 
             for (int i = 0; i < rowsCount - 1; i++)
-            {
-                Console.WriteLine($"Loop #{i}");
-                //select next node to add to the circuit
+            {                
+                // select next node to add to the circuit
                 var (circuitNodeId, frontierNodeId) = SelectNextNode(distances, circuitList, frontierList);
 
-                //add new node to circuit
+                // add new node to circuit
                 circuitList.AddAfter(circuitList.Find(circuitNodeId), frontierNodeId);
 
-                //remove node from frontier
+                // remove node from frontier
                 frontierList.Remove(frontierNodeId);
 
                 //DEBUG
-                Console.WriteLine("Circuit");
-                Console.WriteLine(string.Join(' ', circuitList));
+                //Console.WriteLine("Circuit");
+                //Console.WriteLine(string.Join(' ', circuitList));
 
-                Console.WriteLine("Frontier");
-                Console.WriteLine(string.Join(' ', frontierList));                
+                //Console.WriteLine("Frontier");
+                //Console.WriteLine(string.Join(' ', frontierList));                
             }
 
-            //return circuit and cost
+            // return circuit and cost
             return (circuitList, CircuitCost(distances, circuitList));
         }
         
@@ -110,14 +121,14 @@ namespace TspApp
             double[] costs = new double[filteredFrontier.Count];
             double costsSum = 0;
 
-            //compute frontier nodes costs
+            // compute frontier nodes costs
             for (int i = 0; i < filteredFrontier.Count; i++)
             {
                 costs[i] = distances[currentNode, i];
                 costsSum += costs[i];
             }
 
-            //rescale costs
+            // rescale costs
             var minCost = costs.Min();
             var maxCost = costs.Max();
             for (int i = 0; i < costs.Length; i++)
@@ -125,7 +136,7 @@ namespace TspApp
                 costs[i] = Math.Round((costs[i] - minCost) / (maxCost - minCost),3);
             }
 
-            //filter costs
+            // filter costs
             var random = new Random();
             var k = random.NextDouble();
             for (int i = 0; i < costs.Length; i++)
@@ -136,14 +147,14 @@ namespace TspApp
 
             return filteredFrontier;
         }
-        
-        private (uint,uint) SelectNextNode(uint[,] distances, LinkedList<uint> circuit, List<uint> frontier)
+
+        private static (uint, uint) SelectNextNode(uint[,] distances, LinkedList<uint> circuit, List<uint> frontier)
         {
             uint circuitNodeId = 0;
             uint frontierNodeId = 0;
             uint minimumAddCost = uint.MaxValue;
             
-            //select a node from the circuit
+            // select a node from the circuit
             foreach (uint circuitNode in circuit) 
             {
                 uint nextNodeId;
@@ -152,16 +163,16 @@ namespace TspApp
                 else
                     nextNodeId = circuit.Find(circuitNode).Next.Value;
 
-                //filter frontier
+                // filter frontier
                 List<uint> filteredFrontier = FilterFrontier(distances, circuitNodeId, frontier);
 
-                //select a node from the frontier
+                // select a node from the frontier
                 foreach (uint ext in filteredFrontier) 
                 {                    
                     uint extAddCost = distances[circuitNode, ext] + distances[ext, nextNodeId] - distances[circuitNode, nextNodeId];
                     if (extAddCost <= minimumAddCost)
                     {
-                        //update best node so far
+                        // update best node so far
                         minimumAddCost = extAddCost;
                         circuitNodeId = circuitNode;
                         frontierNodeId = ext;
@@ -178,22 +189,21 @@ namespace TspApp
 
             foreach (uint node in circuit)
             {
-                //get next node
+                // get next node
                 uint next;
                 if (node == circuit.Last.Value)
                     next = circuit.First.Value;
                 else
                     next = circuit.Find(node).Next.Value;
 
-                //compute segment cost
+                // compute segment cost
                 var c = distances[node, next];
 
-                //update total circuit cost
+                // update total circuit cost
                 cost += c;
             }
 
             return cost;
         }
-
     }
 }

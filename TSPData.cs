@@ -49,6 +49,7 @@ namespace TspApp
                 return result;
             }
         }
+        
         public void SaveMatrix(uint[,] matrix, string name)
         {
             // get max digits
@@ -103,18 +104,23 @@ namespace TspApp
             }            
         }
         
-        public void SaveResults(List<string> results)
+        public void SaveResults(Dictionary<string, List<string>> results, string folderName)
         {
-            string name = $"{DateTime.Now.Day}{DateTime.Now.Hour}{DateTime.Now.Minute}{DateTime.Now.Second}";
-            var file = File.CreateText(Path.Combine(resultsDirPath, $"{name}.txt"));
-            using (StreamWriter sw = file)
+            // create run folder            
+            var folder = Directory.CreateDirectory(Path.Combine(resultsDirPath, folderName));
+
+            foreach (var res in results)
             {
-                foreach (var line in results)
+                var file = File.CreateText(Path.Combine(folder.FullName, $"{res.Key}.txt"));
+                using (StreamWriter sw = file)
                 {
-                    sw.WriteLine(line);
+                    foreach (var line in res.Value)
+                    {
+                        sw.WriteLine(line);
+                    }
+                    Console.WriteLine($"Results saved in folder: {((FileStream)(sw.BaseStream)).Name}");
                 }
-                Console.WriteLine($"Results saved in folder: {((FileStream)(sw.BaseStream)).Name}");
-            }
+            }            
         }
         #endregion
 
