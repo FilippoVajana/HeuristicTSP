@@ -56,9 +56,9 @@ def plot_instance_circuits(name : str, node_pos, results):
     pass
 
 
-def plot_costs(costs):
-    optimum = 1610   
+def plot_costs(costs, optimum, instance_name):      
     fig = plt.figure()
+    fig.suptitle(instance_name, size=22)
 
     ax1 = plt.subplot(311)
     plt.hist(costs, 15, rwidth=.8)
@@ -86,8 +86,7 @@ def plot_costs(costs):
     plt.scatter(x=1, y=optimum, label=f'optimum = {optimum}', c='red')
     plt.plot([], [], label=f'median = {np.median(costs)}', c='orange')
     plt.plot([], [], label=f'min,max = {np.min(costs)},{np.max(costs)}')
-    plt.plot([], [], label=f'Q1,Q3 = {np.quantile(costs, .25)},{np.quantile(costs, .75)}', c='black')
-    
+    plt.plot([], [], label=f'Q1,Q3 = {np.quantile(costs, .25)},{np.quantile(costs, .75)}', c='black')    
     
     plt.legend(frameon=False)
 
@@ -113,7 +112,7 @@ if __name__ == '__main__':
     res_files = sorted(os.listdir(res_root))
     res_dict = dict()
 
-    for f in res_files:        
+    for f in res_files:             
         res = read_results(os.path.join(res_root, f))
         res_dict[str(f).replace("_mat.dat.txt", "")] = res
 
@@ -122,9 +121,7 @@ if __name__ == '__main__':
 
 
     # plot circuits
-    for k in sorted(pos_dict.keys()):
-        print(k)
-
+    for k in sorted(pos_dict.keys()): 
         fig, ax = plt.subplots(nrows=1, ncols=2)
         fig.suptitle(k, size=22)
         plt.setp(ax, xticks=[], yticks=[])
@@ -139,10 +136,23 @@ if __name__ == '__main__':
         ax[0].set_title(f"value: {best[1]}")
         plot_circuit(pos_dict[k], worst, ax[1])
         ax[1].set_title(f"value: {worst[1]}")
-
-    plt.show()
-
-    # costs = [c for (cir, c) in results]
-    # plot_costs(costs)
-
     # plt.show()
+    
+    # plot costs
+    opt = {
+        "att48" : 10628,
+        "bayg29" : 1610,
+        "bays29" : 2020,
+        "berlin52" : 7542,
+        "burma14" : 3323,
+        "fri26" : 937,
+        "gr21" : 2707,
+        "gr24" : 1272,
+        "pr76" : 108159,
+        "st70" : 675 }
+
+    for k in sorted(res_dict.keys()):
+        costs = [c for (circuit, c) in res_dict[k]]        
+        plot_costs(costs, opt[k], k)
+        
+    plt.show()
