@@ -3,10 +3,11 @@ import glob
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import numpy as np
+from tqdm import tqdm
 
 def read_positions_file(file_path : str):
     positions = dict()
-    # parse file
+    # parse file    
     file = open(file_path, 'r')    
     for line in file:
         line = str(line).replace('\n', '')
@@ -53,7 +54,7 @@ def plot_circuit(cities_pos, result, ax):
     
     return ax
 
-def plot_instance_circuits(name : str, node_pos, results):
+def get_inst_circuit_fig(name : str, node_pos, results):
     pass
 
 
@@ -92,9 +93,8 @@ def plot_costs(costs, optimum, instance_name):
     plt.legend(frameon=False)
 
 
-def plot_costs2(costs, optimum, instance_name):
-    fig = plt.figure(figsize=(10,10))
-    # fig.suptitle(instance_name, size=22)
+def get_inst_cost_fig(costs, optimum, instance_name):
+    fig = plt.figure(figsize=(10,10))    
 
     gs = GridSpec(2, 2, width_ratios=[2, 1], height_ratios=[1, 1])
 
@@ -133,47 +133,62 @@ def plot_costs2(costs, optimum, instance_name):
 
 if __name__ == '__main__':
     # get nodes positions
-    pos_root = "./data/instances"
-    pos_files = sorted(list(filter(lambda name: '_pos.dat' in name, os.listdir(pos_root))))
-    pos_dict = dict()
-    
-    for f in pos_files:        
-        pos = read_positions_file(os.path.join(pos_root, f))
+    POSITIONS_PATH = "./data/instances"
+    pos_files = sorted(list(filter(lambda name: '_pos.dat' in name, os.listdir(POSITIONS_PATH))))
+    pos_dict = dict()    
+    for f in tqdm(pos_files, desc="Read Positions"):        
+        pos = read_positions_file(os.path.join(POSITIONS_PATH, f))
         pos_dict[str(f).replace("_pos.dat", "")] = pos
 
-
     # get solutions circuits
-    res_root = "./data/results/6023"
-    res_files = sorted(os.listdir(res_root))
+    RESULTS_PATH = "./data/results/semigreedy"
+    res_files = sorted(os.listdir(RESULTS_PATH))
     res_dict = dict()
-
-    for f in res_files:             
-        res = read_results(os.path.join(res_root, f))
-        res_dict[str(f).replace("_mat.dat.txt", "")] = res
+    for f in tqdm(res_files, desc="Read Results"):
+        try:
+            res = read_results(os.path.join(RESULTS_PATH, f))
+            res_dict[str(f).replace("_mat.dat.txt", "")] = res
+        except Exception:
+            pass
+        
 
     print("Positions Files: ", pos_dict.keys())
     print("Results Files: ", res_dict.keys())
 
 
     # plot circuits
-    # for k in sorted(pos_dict.keys()): 
-    #     fig, ax = plt.subplots(nrows=1, ncols=2)
-    #     fig.suptitle(k, size=22)
-    #     plt.setp(ax, xticks=[], yticks=[])
-    #     plt.subplots_adjust(wspace=0)
+    CIRCUITS_PLOT_PATH = os.path.join(RESULTS_PATH, "circuits")
+    try:
+        os.makedirs(CIRCUITS_PLOT_PATH)
+    except Exception:
+        pass
 
-    #     # get best and worst circuit        
-    #     best = min(res_dict[k], key=lambda t: t[1])
-    #     worst = max(res_dict[k], key=lambda t: t[1])
+    for k in tqdm(sorted(pos_dict.keys()), desc="Plot Circuits"):
+        fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10,10))
+        fig.suptitle(k, size=22)
+        plt.setp(ax, xticks=[], yticks=[])
+        plt.subplots_adjust(wspace=0)
 
-    #     # plot        
-    #     plot_circuit(pos_dict[k], best, ax[0])
-    #     ax[0].set_title(f"value: {best[1]}")
-    #     plot_circuit(pos_dict[k], worst, ax[1])
-    #     ax[1].set_title(f"value: {worst[1]}")
-    # plt.show()
+        # get best and worst circuit        
+        best = min(res_dict[k], key=lambda t: t[1])
+        worst = max(res_dict[k], key=lambda t: t[1])
+
+        # plot        
+        plot_circuit(pos_dict[k], best, ax[0])
+        ax[0].set_title(f"value: {best[1]}")
+        plot_circuit(pos_dict[k], worst, ax[1])
+        ax[1].set_title(f"value: {worst[1]}")
+
+        plt.savefig(os.path.join(CIRCUITS_PLOT_PATH, f"{k}.png"), arr=fig, format='png')
     
-    # plot costs
+    
+    # plot stats
+    STATS_PLOT_PATH = os.path.join(RESULTS_PATH, "stats")
+    try:
+        os.makedirs(STATS_PLOT_PATH)
+    except Exception:
+        pass
+
     opt = {
         "att48" : 10628,
         "bayg29" : 1610,
@@ -184,11 +199,9 @@ if __name__ == '__main__':
         "gr24" : 1272,
         "pr76" : 108159,
         "st70" : 675 }
-
-    for k in sorted(res_dict.keys()):
+    
+    for k in tqdm(sorted(res_dict.keys()), desc="Plot Stats"):
         costs = [c for (circuit, c) in res_dict[k]]
-        fig = plot_costs2(costs, opt[k], k)
-        plt.savefig(f"./data/results/plots/{k}.png", arr=fig, format='png')
-        # plt.show()
+        fig = get_inst_cost_fig(costs, opt[k], k)
+        plt.savefig(os.path.join(STATS_PLOT_PATH, f"{k}.png"), arr=fig, format='png')
         
-    # plt.show()

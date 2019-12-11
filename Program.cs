@@ -22,7 +22,8 @@ namespace TspApp
         /// <param name="args"></param>
         /// 
 
-        public static uint[,] distanceMatrix;
+        private static uint[,] distanceMatrix;
+        private static readonly Random RNG = new Random(42);
         static void Main()
         {
             var data = new TSPData("./data/source", "./data/instances", "./data/results");
@@ -42,7 +43,7 @@ namespace TspApp
             foreach (var instanceName in instances)
             {
                 // load and parse data            
-                distanceMatrix = data.LoadMatrix(instanceName); // TODO: change reference in methods
+                distanceMatrix = data.LoadMatrix(instanceName);
 
                 // run the algorithm                
                 var instanceResult = new List<string>(runsCount * 2);
@@ -51,7 +52,7 @@ namespace TspApp
 
                 for (int r = 0; r < runsCount; r++)
                 {
-                    var (circuit, cost) = p.RunHeuristic();
+                    var (circuit, cost) = p.RunHeuristic(grasp: false);
                     instanceResult.Add(string.Join(' ', circuit));
                     instanceResult.Add(cost.ToString());
                 }
@@ -65,14 +66,13 @@ namespace TspApp
             data.SaveResults(results, folderName);            
         }
 
-        private (LinkedList<uint>, uint) RunHeuristic()
+        private (LinkedList<uint>, uint) RunHeuristic(bool grasp = true)
         {
             // distances matrix            
             int rowsCount = (int) Math.Sqrt(distanceMatrix.Length);
 
-            // select starting node
-            var random = new Random();
-            uint startNode = (uint) random.Next(maxValue: (int) rowsCount);
+            // select starting node            
+            uint startNode = (uint) RNG.Next(maxValue: (int) rowsCount);
 
             // init circuit
             LinkedList<uint> circuitList = new LinkedList<uint>();
@@ -96,7 +96,10 @@ namespace TspApp
             }
 
             // 2-opt exchange heuristic
-            circuitList = Opt2Swap(circuitList);
+            if (grasp)
+            {                
+                circuitList = Opt2Swap(circuitList);
+            }
 
             // return circuit and cost
             return (circuitList, CircuitCost(circuitList));
@@ -174,8 +177,7 @@ namespace TspApp
             }
 
             // filter costs
-            var random = new Random();
-            var k = random.NextDouble();
+            var k = RNG.NextDouble();
             for (int i = 0; i < costs.Length; i++)
             {
                 if (k >= costs[i])
