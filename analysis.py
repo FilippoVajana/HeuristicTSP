@@ -28,7 +28,9 @@ def read_results(file_path : str):
     
     return results # [(circuit, cost)]
 
-def plot_circuit(cities_pos, result, ax):
+
+### PLOTS ###
+def get_circuit_ax(cities_pos, result, ax):
     circuit, cost = result
     # get cities coordinates
     pos = [v for v in cities_pos.values()]
@@ -53,8 +55,6 @@ def plot_circuit(cities_pos, result, ax):
         ax.annotate("", xy=start, xycoords='data', xytext=end, textcoords='data', arrowprops=dict(arrowstyle="->", connectionstyle="arc3"))    
     
     return ax
-
-
 
 def get_cost_fig(i_costs, i_optimum, i_name):
     fig = plt.figure(figsize=(10,10))    
@@ -90,6 +90,20 @@ def get_cost_fig(i_costs, i_optimum, i_name):
     
     return fig
 
+def boxplot_compare(i_costs_dict, i_optimum_dict):
+    fig = plt.figure(figsize=(10,10))    
+    fig.subplots_adjust(hspace=0.4)
+    idx = 1
+
+    for k in i_costs_dict.keys():
+        ax = plt.subplot(3, 4, idx)
+        ax.set_title(k)
+        ax.set_yticklabels([])
+        ax.boxplot(x=i_costs_dict[k], labels=["semigreedy", "grasp"])
+        ax.scatter(x=[1,2], y=[i_optimum_dict[k], i_optimum_dict[k]], label=f'optimum = {i_optimum_dict[k]}', c='red')
+        idx += 1
+    
+    return fig
 
 
 
@@ -167,4 +181,16 @@ if __name__ == '__main__':
         costs = [c for (circuit, c) in res_dict[k]]
         fig = get_inst_cost_fig(costs, opt[k], k)
         plt.savefig(os.path.join(STATS_PLOT_PATH, f"{k}.png"), arr=fig, format='png')
-        
+            ### BOXPLOT COMPARISON
+    semigreedy_results_dict = get_solutions("./data/results/semigreedy")
+    grasp_results_dict = get_solutions("./data/results/grasp")
+    # merge dicts (semigreedy, grasp)
+    bench_results_dict = dict()
+    for k in semigreedy_results_dict.keys():
+        semigreedy = [c for (p,c) in semigreedy_results_dict[k]]
+        grasp = [c for (p,c) in grasp_results_dict[k]]
+        bench_results_dict[k] = (semigreedy, grasp)
+    # plot boxplots
+    fig = boxplot_compare(bench_results_dict, OPTIMUM)
+    plt.savefig(os.path.join("./data/results", "boxplot_compare.png"), arr=fig, format='png', bbox_inches='tight')
+    
