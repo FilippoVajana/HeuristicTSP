@@ -92,17 +92,17 @@ def get_cost_fig(i_costs, i_optimum, i_name):
     
     return fig
 
-def boxplot_compare(i_costs_dict, i_optimum_dict):
+def boxplot_compare(costs_dict, optimus_dict):
     fig = plt.figure(figsize=(10,10))    
     fig.subplots_adjust(hspace=0.4)
     idx = 1
 
-    for k in i_costs_dict.keys():
+    for k in costs_dict.keys():
         ax = plt.subplot(3, 4, idx)
         ax.set_title(k)
         ax.set_yticklabels([])
-        ax.boxplot(x=i_costs_dict[k], labels=["semigreedy", "grasp"])
-        ax.scatter(x=[1,2], y=[i_optimum_dict[k], i_optimum_dict[k]], label=f'optimum = {i_optimum_dict[k]}', c='red')
+        ax.boxplot(x=costs_dict[k], labels=["semigreedy", "grasp"])
+        ax.scatter(x=[1,2], y=[optimus_dict[k], optimus_dict[k]], label=f'optimum = {optimus_dict[k]}', c='red')
         idx += 1
     
     return fig
@@ -110,7 +110,7 @@ def boxplot_compare(i_costs_dict, i_optimum_dict):
 
 
 ### CSV ###
-def get_rsq_table(costs_dict, optimum_dict):
+def get_rsq_table(costs_dict, optimus_dict):
     data = {        
         'best' : [],
         'worst' : [],
@@ -118,7 +118,7 @@ def get_rsq_table(costs_dict, optimum_dict):
 
     for inst in costs_dict.keys():
         # get optimum
-        opt = optimum_dict[inst]
+        opt = optimus_dict[inst]
         # get min, max, avg
         best = min(costs_dict[inst], key=lambda t: t[1])[1]
         worst = max(costs_dict[inst], key=lambda t: t[1])[1]
@@ -133,6 +133,30 @@ def get_rsq_table(costs_dict, optimum_dict):
     df = df.round(2)
     return df
 
+def rsq_compare(costs_dict, optimus_dict):
+    data = {
+        'semigreedy_rsq': [],
+        'grasp_rsq': [],
+        'delta_rsq': []}
+    
+    for inst in costs_dict.keys():
+        # get optimum
+        opt = optimus_dict[inst]
+        # get avgs        
+        grasp_avg = np.mean(costs_dict[inst][1])
+        semigreedy_avg = np.mean(costs_dict[inst][0])
+        # rsq        
+        data['semigreedy_rsq'].append(np.abs(semigreedy_avg - opt) / opt * 100)
+        data['grasp_rsq'].append(np.abs(grasp_avg - opt) / opt * 100)
+
+    # delta
+    delta_arr = (1 - np.asarray(data['grasp_rsq']) / np.asarray(data['semigreedy_rsq'])) * 100
+    data['delta_rsq'] = -1 * delta_arr
+        
+
+    df = pd.DataFrame(data=data, index=costs_dict.keys())
+    df = df.round(2)
+    return df
 
 ### HELPER ###
 def get_solutions(path):
@@ -175,7 +199,7 @@ if __name__ == '__main__':
 
     # get nodes positions        
     pos_dict = get_2dpositions(POSITIONS_2D_DATA_PATH)
-    
+
     # get solutions circuits
     res_dict = get_solutions(BENCHMARK_RESULTS_PATH)
 
@@ -216,12 +240,26 @@ if __name__ == '__main__':
     #     plt.savefig(os.path.join(STATS_PLOT_PATH, f"{k}.png"), arr=fig, format='png', bbox_inches='tight')
 
 
-    # ### SAVE RSQ
+    # ### RSQ
     # df = get_rsq_table(res_dict, opt)
     # df.to_csv(os.path.join(BENCHMARK_RESULTS_PATH, 'rsq.csv'))
 
+    
+    # ### BOXPLOT COMPARISON
+    # semigreedy_results_dict = get_solutions("./data/results/semigreedy")
+    # grasp_results_dict = get_solutions("./data/results/grasp")
+    # # merge dicts (semigreedy, grasp)
+    # bench_results_dict = dict()
+    # for k in semigreedy_results_dict.keys():
+    #     semigreedy = [c for (p,c) in semigreedy_results_dict[k]]
+    #     grasp = [c for (p,c) in grasp_results_dict[k]]
+    #     bench_results_dict[k] = (semigreedy, grasp)
+    # # plot boxplots
+    # fig = boxplot_compare(bench_results_dict, OPTIMUM)
+    # plt.savefig(os.path.join("./data/results", "boxplot_compare.png"), arr=fig, format='png', bbox_inches='tight')
 
-    ### BOXPLOT COMPARISON
+
+    ### RSQ COMPARISON
     semigreedy_results_dict = get_solutions("./data/results/semigreedy")
     grasp_results_dict = get_solutions("./data/results/grasp")
     # merge dicts (semigreedy, grasp)
@@ -230,7 +268,6 @@ if __name__ == '__main__':
         semigreedy = [c for (p,c) in semigreedy_results_dict[k]]
         grasp = [c for (p,c) in grasp_results_dict[k]]
         bench_results_dict[k] = (semigreedy, grasp)
-    # plot boxplots
-    fig = boxplot_compare(bench_results_dict, OPTIMUM)
-    plt.savefig(os.path.join("./data/results", "boxplot_compare.png"), arr=fig, format='png', bbox_inches='tight')
-    
+
+    df = rsq_compare(bench_results_dict, OPTIMUM)
+    df.to_csv(os.path.join("./data/results", 'rsq_compare.csv'))
