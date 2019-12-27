@@ -4,7 +4,9 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import numpy as np
 from tqdm import tqdm
+import pandas as pd
 
+### IO ###
 def read_positions_file(file_path : str):
     positions = dict()
     # parse file    
@@ -127,68 +129,40 @@ def get_rsq_table(costs_dict, optimum_dict):
         data['avg'].append(np.abs(avg - opt) / opt * 100)
         
 
-if __name__ == '__main__':
-    # get nodes positions
-    POSITIONS_PATH = "./data/instances"
-    pos_files = sorted(list(filter(lambda name: '_pos.dat' in name, os.listdir(POSITIONS_PATH))))
-    pos_dict = dict()    
-    for f in tqdm(pos_files, desc="Read Positions"):        
-        pos = read_positions_file(os.path.join(POSITIONS_PATH, f))
-        pos_dict[str(f).replace("_pos.dat", "")] = pos
     df = pd.DataFrame(data=data, index=costs_dict.keys())
     df = df.round(2)
     return df
 
-    # get solutions circuits
-    RESULTS_PATH = "./data/results/semigreedy"
-    res_files = sorted(os.listdir(RESULTS_PATH))
+
+### HELPER ###
+def get_solutions(path):
+    res_files = sorted(list(filter(lambda name: '.dat' in name, os.listdir(path))))
     res_dict = dict()
     for f in tqdm(res_files, desc="Read Results"):
         try:
-            res = read_results(os.path.join(RESULTS_PATH, f))
+            res = read_results(os.path.join(path, f))
             res_dict[str(f).replace("_mat.dat.txt", "")] = res
         except Exception:
             pass
-        
 
-    print("Positions Files: ", pos_dict.keys())
-    print("Results Files: ", res_dict.keys())
+    return res_dict
 
-
-    # plot circuits
-    CIRCUITS_PLOT_PATH = os.path.join(RESULTS_PATH, "circuits")
-    try:
-        os.makedirs(CIRCUITS_PLOT_PATH)
-    except Exception:
-        pass
-
-    for k in tqdm(sorted(pos_dict.keys()), desc="Plot Circuits"):
-        fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10,10))
-        fig.suptitle(k, size=22)
-        plt.setp(ax, xticks=[], yticks=[])
-        plt.subplots_adjust(wspace=0)
-
-        # get best and worst circuit        
-        best = min(res_dict[k], key=lambda t: t[1])
-        worst = max(res_dict[k], key=lambda t: t[1])
-
-        # plot        
-        plot_circuit(pos_dict[k], best, ax[0])
-        ax[0].set_title(f"value: {best[1]}")
-        plot_circuit(pos_dict[k], worst, ax[1])
-        ax[1].set_title(f"value: {worst[1]}")
-
-        plt.savefig(os.path.join(CIRCUITS_PLOT_PATH, f"{k}.png"), arr=fig, format='png')
+def get_2dpositions(path):
+    pos_files = sorted(list(filter(lambda name: '_pos.dat' in name, os.listdir(path))))
+    pos_dict = dict()    
+    for f in tqdm(pos_files, desc="Read Positions"):        
+        pos = read_positions_file(os.path.join(POSITIONS_2D_DATA_PATH, f))
+        pos_dict[str(f).replace("_pos.dat", "")] = pos
     
-    
-    # plot stats
-    STATS_PLOT_PATH = os.path.join(RESULTS_PATH, "stats")
-    try:
-        os.makedirs(STATS_PLOT_PATH)
-    except Exception:
-        pass
+    return pos_dict
 
-    opt = {
+
+if __name__ == '__main__':
+    POSITIONS_2D_DATA_PATH = "./data/instances"
+    BENCHMARK_RESULTS_PATH = "./data/results/semigreedy"
+    CIRCUITS_PLOT_PATH = os.path.join(BENCHMARK_RESULTS_PATH, "circuits")
+    STATS_PLOT_PATH = os.path.join(BENCHMARK_RESULTS_PATH, "stats")
+    OPTIMUM = {
         "att48" : 10628,
         "bayg29" : 1610,
         "bays29" : 2020,        
@@ -198,12 +172,56 @@ if __name__ == '__main__':
         "gr24" : 1272,
         "pr76" : 108159,
         "st70" : 675 }
+
+    # get nodes positions        
+    pos_dict = get_2dpositions(POSITIONS_2D_DATA_PATH)
     
-    for k in tqdm(sorted(res_dict.keys()), desc="Plot Stats"):
-        costs = [c for (circuit, c) in res_dict[k]]
-        fig = get_inst_cost_fig(costs, opt[k], k)
-        plt.savefig(os.path.join(STATS_PLOT_PATH, f"{k}.png"), arr=fig, format='png')
-            ### BOXPLOT COMPARISON
+    # get solutions circuits
+    res_dict = get_solutions(BENCHMARK_RESULTS_PATH)
+
+    print("Positions Files: ", pos_dict.keys())
+    print("Results Files: ", res_dict.keys())
+
+
+    # ### PLOT CIRCUITS
+    # try:
+    #     os.makedirs(CIRCUITS_PLOT_PATH)
+    # except Exception:
+    #     pass
+
+    # for k in tqdm(sorted(pos_dict.keys()), desc="Plot Circuits"):
+    #     fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10,10))        
+    #     plt.setp(ax, xticks=[], yticks=[])
+    #     plt.subplots_adjust(wspace=0)
+
+    #     # get best and worst circuit        
+    #     best = min(res_dict[k], key=lambda t: t[1])
+    #     worst = max(res_dict[k], key=lambda t: t[1])
+
+    #     # plot        
+    #     plot_circuit(pos_dict[k], best, ax[0])        
+    #     plot_circuit(pos_dict[k], worst, ax[1])        
+    #     plt.savefig(os.path.join(CIRCUITS_PLOT_PATH, f"{k}.png"), arr=fig, format='png', bbox_inches='tight')
+    
+    
+    # ### PLOT STATS
+    # try:
+    #     os.makedirs(STATS_PLOT_PATH)
+    # except Exception:
+    #     pass
+    
+    # for k in tqdm(sorted(res_dict.keys()), desc="Plot Stats"):
+    #     costs = [c for (circuit, c) in res_dict[k]]
+    #     fig = get_cost_fig(costs, OPTIMUM[k], k)
+    #     plt.savefig(os.path.join(STATS_PLOT_PATH, f"{k}.png"), arr=fig, format='png', bbox_inches='tight')
+
+
+    # ### SAVE RSQ
+    # df = get_rsq_table(res_dict, opt)
+    # df.to_csv(os.path.join(BENCHMARK_RESULTS_PATH, 'rsq.csv'))
+
+
+    ### BOXPLOT COMPARISON
     semigreedy_results_dict = get_solutions("./data/results/semigreedy")
     grasp_results_dict = get_solutions("./data/results/grasp")
     # merge dicts (semigreedy, grasp)
