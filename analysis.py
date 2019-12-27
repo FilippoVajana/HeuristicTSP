@@ -54,43 +54,6 @@ def plot_circuit(cities_pos, result, ax):
     
     return ax
 
-def get_inst_circuit_fig(name : str, node_pos, results):
-    pass
-
-
-def plot_costs(costs, optimum, instance_name):      
-    fig = plt.figure(figsize=(10,10))
-    fig.suptitle(instance_name, size=22)
-
-    ax1 = plt.subplot(321)
-    plt.hist(costs, 15, rwidth=.8)
-    plt.xlabel('Solution value')
-    plt.ylabel('Count')
-    plt.minorticks_on()
-    plt.axvline(x=optimum, label=f'optimum = {optimum}', c='red')
-    plt.legend(frameon=False)
-
-    ax2 = plt.subplot(322)
-    plt.minorticks_on()
-    plt.xlabel('Relative solution quality [%]')
-    plt.ylabel('Cumulative frequency')
-    costs.sort()
-    data = np.array(costs)
-    diff_relative = np.abs(data - optimum) / optimum    
-    plt.plot(diff_relative, np.arange(len(diff_relative)))
-
-    ax3 = plt.subplot(323)
-    plt.boxplot(costs, vert=False)
-    for c in costs:
-        plt.scatter(x=c, y=1, c='silver')
-    plt.ylabel('Solution value')
-    
-    plt.scatter(x=optimum, y=1, label=f'optimum = {optimum}', c='red')
-    plt.plot([], [], label=f'median = {np.median(costs)}', c='orange')
-    plt.plot([], [], label=f'min,max = {np.min(costs)},{np.max(costs)}')
-    plt.plot([], [], label=f'Q1,Q3 = {np.quantile(costs, .25)},{np.quantile(costs, .75)}', c='black')    
-    
-    plt.legend(frameon=False)
 
 
 def get_inst_cost_fig(costs, optimum, instance_name):
