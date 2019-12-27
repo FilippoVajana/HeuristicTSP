@@ -56,37 +56,37 @@ def plot_circuit(cities_pos, result, ax):
 
 
 
-def get_inst_cost_fig(costs, optimum, instance_name):
+def get_cost_fig(i_costs, i_optimum, i_name):
     fig = plt.figure(figsize=(10,10))    
 
     gs = GridSpec(2, 2, width_ratios=[2, 1], height_ratios=[1, 1])
 
     ax1 = fig.add_subplot(gs[0, 0:1])
-    plt.hist(costs, 15, rwidth=.8)
+    plt.hist(i_costs, 15, rwidth=.8)
     plt.xlabel('Solution value')
     plt.ylabel('Count')
     plt.minorticks_on()
-    plt.axvline(x=optimum, label=f'optimum = {optimum}', c='red')
+    plt.axvline(x=i_optimum, label=f'optimum = {i_optimum}', c='red')
 
     ax2 = fig.add_subplot(gs[1, 0:1])
     plt.minorticks_on()
     plt.xlabel('Relative solution quality [%]')
     plt.ylabel('Cumulative frequency')    
-    costs.sort()
-    data = np.array(costs)
-    diff_relative = np.abs(data - optimum) / optimum * 100
+    i_costs.sort()
+    data = np.array(i_costs)
+    diff_relative = np.abs(data - i_optimum) / i_optimum * 100
     plt.plot(diff_relative, np.arange(len(diff_relative)))
 
 
     ax3 = fig.add_subplot(gs[:, -1])    
-    plt.boxplot(costs, labels=[""])
-    for c in costs:
+    plt.boxplot(i_costs, labels=[""])
+    for c in i_costs:
         plt.scatter(x=1, y=c, c='silver')    
     
-    plt.scatter(x=1, y=optimum, label=f'optimum = {optimum}', c='red')
-    plt.plot([], [], label=f'median = {np.median(costs)}', c='orange')
-    plt.plot([], [], label=f'min,max = {np.min(costs)},{np.max(costs)}')
-    plt.plot([], [], label=f'Q1,Q3 = {np.quantile(costs, .25)},{np.quantile(costs, .75)}', c='black')    
+    plt.scatter(x=1, y=i_optimum, label=f'optimum = {i_optimum}', c='red')
+    plt.plot([], [], label=f'median = {np.median(i_costs)}', c='orange')
+    plt.plot([], [], label=f'min,max = {np.min(i_costs)},{np.max(i_costs)}')
+    plt.plot([], [], label=f'Q1,Q3 = {np.quantile(i_costs, .25)},{np.quantile(i_costs, .75)}', c='black')    
     
     return fig
 
