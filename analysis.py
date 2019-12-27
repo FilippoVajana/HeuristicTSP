@@ -107,6 +107,25 @@ def boxplot_compare(i_costs_dict, i_optimum_dict):
 
 
 
+### CSV ###
+def get_rsq_table(costs_dict, optimum_dict):
+    data = {        
+        'best' : [],
+        'worst' : [],
+        'avg' : []}
+
+    for inst in costs_dict.keys():
+        # get optimum
+        opt = optimum_dict[inst]
+        # get min, max, avg
+        best = min(costs_dict[inst], key=lambda t: t[1])[1]
+        worst = max(costs_dict[inst], key=lambda t: t[1])[1]
+        avg = np.mean([cost for circ, cost in costs_dict[inst]])
+        # rsq        
+        data['best'].append(np.abs(best - opt) / opt * 100)
+        data['worst'].append(np.abs(worst - opt) / opt * 100)
+        data['avg'].append(np.abs(avg - opt) / opt * 100)
+        
 
 if __name__ == '__main__':
     # get nodes positions
@@ -116,6 +135,9 @@ if __name__ == '__main__':
     for f in tqdm(pos_files, desc="Read Positions"):        
         pos = read_positions_file(os.path.join(POSITIONS_PATH, f))
         pos_dict[str(f).replace("_pos.dat", "")] = pos
+    df = pd.DataFrame(data=data, index=costs_dict.keys())
+    df = df.round(2)
+    return df
 
     # get solutions circuits
     RESULTS_PATH = "./data/results/semigreedy"
