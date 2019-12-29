@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using System.IO;
+using ShellProgressBar;
 
 namespace TspApp
 {
@@ -23,7 +24,8 @@ namespace TspApp
         /// 
 
         private static uint[,] distanceMatrix;
-        private static readonly Random RNG = new Random(42);
+        private static readonly Random RNG = new Random();
+        //private static readonly Random RNG = new Random(42);
         static void Main()
         {
             var data = new TSPData("./data/source", "./data/instances", "./data/results");
@@ -37,29 +39,39 @@ namespace TspApp
             //data.PrepareInstanceData(null);
             
             // run on all the instances
-            var runsCount = 100;
+            var runsCount = 10;
             var results = new Dictionary<string, List<string>>(instances.Length);
             
             foreach (var instanceName in instances)
             {
+                Console.WriteLine("Solving instance: " + instanceName);
                 // load and parse data            
                 distanceMatrix = data.LoadMatrix(instanceName);
 
                 // run the algorithm                
                 var instanceResult = new List<string>(runsCount * 2);
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
 
-                for (int r = 0; r < runsCount; r++)
+                using (var pbar = new ProgressBar(runsCount, "Running"))
                 {
-                    var (circuit, cost) = p.RunHeuristic(grasp: false);
-                    instanceResult.Add(string.Join(' ', circuit));
-                    instanceResult.Add(cost.ToString());
-                }
+                    var min = new List<uint>();
+                    for (int r = 0; r < runsCount; r++)
+                    {
+                        var (circuit, cost) = p.RunHeuristic();
+                        min.Add(cost);
+
+                        instanceResult.Add(string.Join(' ', circuit));
+                        instanceResult.Add(cost.ToString());
+                        
+                        pbar.Tick($"Step {r+1} out of {runsCount}");                       
+                    }
+                    pbar.WriteLine($"{instanceName}: {min.Min()}");
+                }                
                 
                 // add instance results to the overall results dictionary
-                results.Add(instanceName, instanceResult);
+                results.Add(instanceName, instanceResult);                
             }
+
+            
             
             // save overall results
             string folderName = $"{DateTime.Now.Day}{DateTime.Now.Hour}{DateTime.Now.Minute}";
