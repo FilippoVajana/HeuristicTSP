@@ -207,56 +207,56 @@ if __name__ == '__main__':
     print("Results Files: ", res_dict.keys())
 
 
-    # ### PLOT CIRCUITS
-    # try:
-    #     os.makedirs(CIRCUITS_PLOT_PATH)
-    # except Exception:
-    #     pass
+    ### PLOT CIRCUITS
+    try:
+        os.makedirs(CIRCUITS_PLOT_PATH)
+    except Exception:
+        pass
 
-    # for k in tqdm(sorted(pos_dict.keys()), desc="Plot Circuits"):
-    #     fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10,10))        
-    #     plt.setp(ax, xticks=[], yticks=[])
-    #     plt.subplots_adjust(wspace=0)
+    for k in tqdm(sorted(pos_dict.keys()), desc="Plot Circuits"):
+        fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10,10))        
+        plt.setp(ax, xticks=[], yticks=[])
+        plt.subplots_adjust(wspace=0)
 
-    #     # get best and worst circuit        
-    #     best = min(res_dict[k], key=lambda t: t[1])
-    #     worst = max(res_dict[k], key=lambda t: t[1])
+        # get best and worst circuit        
+        best = min(res_dict[k], key=lambda t: t[1])
+        worst = max(res_dict[k], key=lambda t: t[1])
 
-    #     # plot        
-    #     plot_circuit(pos_dict[k], best, ax[0])        
-    #     plot_circuit(pos_dict[k], worst, ax[1])        
-    #     plt.savefig(os.path.join(CIRCUITS_PLOT_PATH, f"{k}.png"), arr=fig, format='png', bbox_inches='tight')
+        # plot        
+        get_circuit_ax(pos_dict[k], best, ax[0])        
+        get_circuit_ax(pos_dict[k], worst, ax[1])        
+        plt.savefig(os.path.join(CIRCUITS_PLOT_PATH, f"{k}.png"), arr=fig, format='png', bbox_inches='tight')
     
     
-    # ### PLOT STATS
-    # try:
-    #     os.makedirs(STATS_PLOT_PATH)
-    # except Exception:
-    #     pass
+    ### PLOT STATS
+    try:
+        os.makedirs(STATS_PLOT_PATH)
+    except Exception:
+        pass
     
-    # for k in tqdm(sorted(res_dict.keys()), desc="Plot Stats"):
-    #     costs = [c for (circuit, c) in res_dict[k]]
-    #     fig = get_cost_fig(costs, OPTIMUM[k], k)
-    #     plt.savefig(os.path.join(STATS_PLOT_PATH, f"{k}.png"), arr=fig, format='png', bbox_inches='tight')
+    for k in tqdm(sorted(res_dict.keys()), desc="Plot Stats"):
+        costs = [c for (circuit, c) in res_dict[k]]
+        fig = get_cost_fig(costs, OPTIMUM[k], k)
+        plt.savefig(os.path.join(STATS_PLOT_PATH, f"{k}.png"), arr=fig, format='png', bbox_inches='tight')
 
 
-    # ### RSQ
-    # df = get_rsq_table(res_dict, opt)
-    # df.to_csv(os.path.join(BENCHMARK_RESULTS_PATH, 'rsq.csv'))
+    ### RSQ
+    df = get_rsq_table(res_dict, OPTIMUM)
+    df.to_csv(os.path.join(BENCHMARK_RESULTS_PATH, 'rsq.csv'))
 
     
-    # ### BOXPLOT COMPARISON
-    # semigreedy_results_dict = get_solutions("./data/results/semigreedy")
-    # grasp_results_dict = get_solutions("./data/results/grasp")
-    # # merge dicts (semigreedy, grasp)
-    # bench_results_dict = dict()
-    # for k in semigreedy_results_dict.keys():
-    #     semigreedy = [c for (p,c) in semigreedy_results_dict[k]]
-    #     grasp = [c for (p,c) in grasp_results_dict[k]]
-    #     bench_results_dict[k] = (semigreedy, grasp)
-    # # plot boxplots
-    # fig = boxplot_compare(bench_results_dict, OPTIMUM)
-    # plt.savefig(os.path.join("./data/results", "boxplot_compare.png"), arr=fig, format='png', bbox_inches='tight')
+    ### BOXPLOT COMPARISON
+    semigreedy_results_dict = get_solutions("./data/results/semigreedy")
+    grasp_results_dict = get_solutions("./data/results/grasp")
+    # merge dicts (semigreedy, grasp)
+    bench_results_dict = dict()
+    for k in semigreedy_results_dict.keys():
+        semigreedy = [c for (p,c) in semigreedy_results_dict[k]]
+        grasp = [c for (p,c) in grasp_results_dict[k]]
+        bench_results_dict[k] = (semigreedy, grasp)
+    # plot boxplots
+    fig = boxplot_compare(bench_results_dict, OPTIMUM)
+    plt.savefig(os.path.join("./data/results", "boxplot_compare.png"), arr=fig, format='png', bbox_inches='tight')
 
 
     ### RSQ COMPARISON
