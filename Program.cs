@@ -157,7 +157,7 @@ namespace TspApp
             return bestCircuit;
         }
 
-        private static List<uint> FilterFrontier(uint currentNode, List<uint> frontier)
+        private static List<uint> FilterFrontier(uint currentNode, uint nextCircuitNode, List<uint> frontier)
         {
             // check for single node frontier
             if (frontier.Count <= 1)
@@ -166,29 +166,16 @@ namespace TspApp
             }
 
             var filteredFrontier = new List<uint>();
-            double[] costs = new double[frontier.Count];            
+            double[] costs = new double[frontier.Count];
 
-            // compute frontier nodes costs
+            // compute frontier nodes insertion cost            
             for (int i = 0; i < frontier.Count; i++)
-            {
-                costs[i] = distanceMatrix[currentNode, frontier[i]];                
+            {                
+                costs[i] = distanceMatrix[currentNode, frontier[i]] + distanceMatrix[frontier[i], nextCircuitNode] - distanceMatrix[currentNode, nextCircuitNode];
             }
 
-            //// rescale costs
-            //var minCost = costs.Min();
-            //var maxCost = costs.Max();
-            //for (int i = 0; i < costs.Length; i++)
-            //{
-            //    costs[i] = Math.Round((costs[i] - minCost) / (maxCost - minCost), 3);
-            //    // check for NaN
-            //    if (double.IsNaN(costs[i]))
-            //    {
-            //        costs[i] = 0;
-            //    }
-            //}
-
             // make RCL
-            var mu = 0.20;
+            var mu = 0.4;
             var rclMin = costs.Min();
             var rclMax = costs.Max(); 
             var rcl = new List<uint>();
@@ -218,7 +205,7 @@ namespace TspApp
                     nextCircuitNode = circuit.Find(circuitNode).Next.Value;
 
                 // filter frontier
-                List<uint> filteredFrontier = FilterFrontier(circuitNode, frontier);
+                List<uint> filteredFrontier = FilterFrontier(circuitNode, nextCircuitNode, frontier);
 
                 // select a node from the frontier
                 foreach (uint ext in filteredFrontier) 
