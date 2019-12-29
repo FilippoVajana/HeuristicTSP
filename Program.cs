@@ -175,7 +175,7 @@ namespace TspApp
             }
 
             // make RCL
-            var mu = 0.30;
+            var mu = 0.4;
             var rclMin = costs.Min();
             var rclMax = costs.Max(); 
             var rcl = new List<uint>();
@@ -194,9 +194,8 @@ namespace TspApp
             uint circuitNodeId = uint.MaxValue;
             uint frontierNodeId = uint.MaxValue;
             uint minimumAddCost = uint.MaxValue;
-
+            
             // select a node from the circuit
-            var extNodeCandidates = new List<(uint, uint)>();
             foreach (uint circuitNode in circuit) 
             {
                 uint nextCircuitNode;
@@ -208,29 +207,21 @@ namespace TspApp
                 // filter frontier
                 List<uint> filteredFrontier = FilterFrontier(circuitNode, nextCircuitNode, frontier);
 
-                // add to candidates list
-                foreach (uint ext in filteredFrontier)
-                {
-                    extNodeCandidates.Add((circuitNode, ext));
-                }
-
-                //// select a node from the frontier
-                //foreach (uint ext in filteredFrontier) 
-                //{                    
-                //    uint extAddCost = distanceMatrix[circuitNode, ext] + distanceMatrix[ext, nextCircuitNode] - distanceMatrix[circuitNode, nextCircuitNode];
-                //    if (extAddCost <= minimumAddCost)
-                //    {
-                //        // update best node so far
-                //        minimumAddCost = extAddCost;
-                //        circuitNodeId = circuitNode;
-                //        frontierNodeId = ext;
-                //    }
-                //}                
+                // select a node from the frontier
+                foreach (uint ext in filteredFrontier) 
+                {                    
+                    uint extAddCost = distanceMatrix[circuitNode, ext] + distanceMatrix[ext, nextCircuitNode] - distanceMatrix[circuitNode, nextCircuitNode];
+                    if (extAddCost <= minimumAddCost)
+                    {
+                        // update best node so far
+                        minimumAddCost = extAddCost;
+                        circuitNodeId = circuitNode;
+                        frontierNodeId = ext;
+                    }
+                }                
             }
 
-            var extIdx = RNG.Next(0, extNodeCandidates.Count);
-            return extNodeCandidates[extIdx];
-            //return (circuitNodeId, frontierNodeId);
+            return (circuitNodeId, frontierNodeId);
         }
 
         private static uint CircuitCost(LinkedList<uint> circuit)
