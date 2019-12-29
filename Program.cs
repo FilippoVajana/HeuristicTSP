@@ -153,50 +153,52 @@ namespace TspApp
                 }
             }
 
-            //foreach (var item in circuitList)
-            //{
-            //    Console.Write(string.Format("{0,2} ", item.ToString()));
-            //}
-            //Console.WriteLine(CircuitCost(circuitList));
-            //foreach (var item in bestCircuit)
-            //{
-            //    Console.Write(string.Format("{0,2} ", item.ToString()));
-            //}
-            //Console.WriteLine(CircuitCost(bestCircuit));
-
             return bestCircuit;
         }
 
         private static List<uint> FilterFrontier(uint currentNode, List<uint> frontier)
         {
-            var filteredFrontier = new List<uint>(frontier);
-            double[] costs = new double[filteredFrontier.Count];
-            double costsSum = 0;
+            // check for single node frontier
+            if (frontier.Count <= 1)
+            {
+                return frontier;
+            }
+
+            var filteredFrontier = new List<uint>();
+            double[] costs = new double[frontier.Count];            
 
             // compute frontier nodes costs
             for (int i = 0; i < frontier.Count; i++)
             {
-                costs[i] = distanceMatrix[currentNode, frontier[i]];
-                costsSum += costs[i];
+                costs[i] = distanceMatrix[currentNode, frontier[i]];                
             }
 
-            // rescale costs
-            var minCost = costs.Min();
-            var maxCost = costs.Max();
+            //// rescale costs
+            //var minCost = costs.Min();
+            //var maxCost = costs.Max();
+            //for (int i = 0; i < costs.Length; i++)
+            //{
+            //    costs[i] = Math.Round((costs[i] - minCost) / (maxCost - minCost), 3);
+            //    // check for NaN
+            //    if (double.IsNaN(costs[i]))
+            //    {
+            //        costs[i] = 0;
+            //    }
+            //}
+
+            // make RCL
+            var mu = 0.20;
+            var rclMin = costs.Min();
+            var rclMax = costs.Max(); 
+            var rcl = new List<uint>();
+
             for (int i = 0; i < costs.Length; i++)
             {
-                costs[i] = Math.Round((costs[i] - minCost) / (maxCost - minCost),3);
+                if (rclMin <= costs[i] && costs[i] <= (rclMin + mu * (rclMax - rclMin)) )
+                    rcl.Add(frontier[i]);
             }
 
-            // filter costs
-            var k = RNG.NextDouble();
-            for (int i = 0; i < costs.Length; i++)
-            {
-                if (k >= costs[i])
-                    filteredFrontier.Remove(frontier[i]);
-            }
-
-            return filteredFrontier;
+            return rcl;
         }
 
         private static (uint, uint) SelectNextNode(LinkedList<uint> circuit, List<uint> frontier)
