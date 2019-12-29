@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using ShellProgressBar;
 
 namespace TspApp
@@ -39,7 +40,7 @@ namespace TspApp
             //data.PrepareInstanceData(null);
             
             // run on all the instances
-            var runsCount = 10;
+            var runsCount = 5;
             var results = new Dictionary<string, List<string>>(instances.Length);
             
             foreach (var instanceName in instances)
@@ -50,28 +51,28 @@ namespace TspApp
 
                 // run the algorithm                
                 var instanceResult = new List<string>(runsCount * 2);
-
-                using (var pbar = new ProgressBar(runsCount, "Running"))
+                var pbarOpts = new ProgressBarOptions
                 {
-                    var min = new List<uint>();
+                    DisplayTimeInRealTime = false
+                };
+
+                using (var pbar = new ProgressBar(runsCount, instanceName, pbarOpts))
+                {     
                     for (int r = 0; r < runsCount; r++)
                     {
                         var (circuit, cost) = p.RunHeuristic();
-                        min.Add(cost);
 
+                        // save run result
                         instanceResult.Add(string.Join(' ', circuit));
                         instanceResult.Add(cost.ToString());
                         
-                        pbar.Tick($"Step {r+1} out of {runsCount}");                       
+                        pbar.Tick($"Task {r} out of {runsCount}");                                                                
                     }
-                    pbar.WriteLine($"{instanceName}: {min.Min()}");
-                }                
+                }
                 
                 // add instance results to the overall results dictionary
                 results.Add(instanceName, instanceResult);                
-            }
-
-            
+            }            
             
             // save overall results
             string folderName = $"{DateTime.Now.Day}{DateTime.Now.Hour}{DateTime.Now.Minute}";
@@ -203,26 +204,26 @@ namespace TspApp
 
         private static (uint, uint) SelectNextNode(LinkedList<uint> circuit, List<uint> frontier)
         {
-            uint circuitNodeId = 0;
-            uint frontierNodeId = 0;
+            uint circuitNodeId = uint.MaxValue;
+            uint frontierNodeId = uint.MaxValue;
             uint minimumAddCost = uint.MaxValue;
             
             // select a node from the circuit
             foreach (uint circuitNode in circuit) 
             {
-                uint nextNodeId;
+                uint nextCircuitNode;
                 if (circuitNode == circuit.Last.Value)
-                    nextNodeId = circuit.First.Value; //simulate a circular linked list
+                    nextCircuitNode = circuit.First.Value; //simulate a circular linked list
                 else
-                    nextNodeId = circuit.Find(circuitNode).Next.Value;
+                    nextCircuitNode = circuit.Find(circuitNode).Next.Value;
 
                 // filter frontier
-                List<uint> filteredFrontier = FilterFrontier(circuitNodeId, frontier);
+                List<uint> filteredFrontier = FilterFrontier(circuitNode, frontier);
 
                 // select a node from the frontier
                 foreach (uint ext in filteredFrontier) 
                 {                    
-                    uint extAddCost = distanceMatrix[circuitNode, ext] + distanceMatrix[ext, nextNodeId] - distanceMatrix[circuitNode, nextNodeId];
+                    uint extAddCost = distanceMatrix[circuitNode, ext] + distanceMatrix[ext, nextCircuitNode] - distanceMatrix[circuitNode, nextCircuitNode];
                     if (extAddCost <= minimumAddCost)
                     {
                         // update best node so far
