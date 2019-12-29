@@ -162,9 +162,9 @@ namespace TspApp
             double costsSum = 0;
 
             // compute frontier nodes costs
-            for (int i = 0; i < filteredFrontier.Count; i++)
+            for (int i = 0; i < frontier.Count; i++)
             {
-                costs[i] = distanceMatrix[currentNode, i];
+                costs[i] = distanceMatrix[currentNode, frontier[i]];
                 costsSum += costs[i];
             }
 
