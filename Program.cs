@@ -26,7 +26,6 @@ namespace TspApp
 
         private static uint[,] distanceMatrix;
         private static readonly Random RNG = new Random();
-        //private static readonly Random RNG = new Random(42);
         static void Main()
         {
             var data = new TSPData("./data/source", "./data/instances", "./data/results");
@@ -40,7 +39,7 @@ namespace TspApp
             //data.PrepareInstanceData(null);
             
             // run on all the instances
-            var runsCount = 5;
+            var runsCount = 100;
             var results = new Dictionary<string, List<string>>(instances.Length);
             
             foreach (var instanceName in instances)
@@ -50,23 +49,19 @@ namespace TspApp
                 distanceMatrix = data.LoadMatrix(instanceName);
 
                 // run the algorithm                
-                var instanceResult = new List<string>(runsCount * 2);
-                var pbarOpts = new ProgressBarOptions
-                {
-                    DisplayTimeInRealTime = false
-                };
+                var instanceResult = new List<string>(runsCount * 2);                
 
-                using (var pbar = new ProgressBar(runsCount, instanceName, pbarOpts))
+                using (var pbar = new ProgressBar(runsCount, instanceName))
                 {     
                     for (int r = 0; r < runsCount; r++)
                     {
-                        var (circuit, cost) = p.RunHeuristic();
+                        var (circuit, cost) = p.RunHeuristic(grasp: true);
 
                         // save run result
                         instanceResult.Add(string.Join(' ', circuit));
                         instanceResult.Add(cost.ToString());
                         
-                        pbar.Tick($"Task {r} out of {runsCount}");                                                                
+                        pbar.Tick($"Task {r + 1} out of {runsCount}");                                                                
                     }
                 }
                 
@@ -164,18 +159,17 @@ namespace TspApp
             {
                 return frontier;
             }
-
-            var filteredFrontier = new List<uint>();
+            
             double[] costs = new double[frontier.Count];
 
             // compute frontier nodes insertion cost            
             for (int i = 0; i < frontier.Count; i++)
-            {                
-                costs[i] = distanceMatrix[currentNode, frontier[i]] + distanceMatrix[frontier[i], nextCircuitNode] - distanceMatrix[currentNode, nextCircuitNode];
+            {
+                costs[i] = distanceMatrix[currentNode, frontier[i]] + distanceMatrix[frontier[i], nextCircuitNode] - distanceMatrix[currentNode, nextCircuitNode];                
             }
 
             // make RCL
-            var mu = 0.4;
+            var mu = 0.40;
             var rclMin = costs.Min();
             var rclMax = costs.Max(); 
             var rcl = new List<uint>();
