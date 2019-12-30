@@ -26,6 +26,7 @@ namespace TspApp
 
         private static uint[,] distanceMatrix;
         private static readonly Random RNG = new Random();
+        private const bool SEMIGREEDY_MODE = false;
         static void Main()
         {
             var data = new TSPData("./data/source", "./data/instances", "./data/results");
@@ -39,7 +40,7 @@ namespace TspApp
             //data.PrepareInstanceData(null);
             
             // run on all the instances
-            var runsCount = 100;
+            var runsCount = 1000;
             var results = new Dictionary<string, List<string>>(instances.Length);
             
             foreach (var instanceName in instances)
@@ -55,7 +56,7 @@ namespace TspApp
                 {     
                     for (int r = 0; r < runsCount; r++)
                     {
-                        var (circuit, cost) = p.RunHeuristic(grasp: true);
+                        var (circuit, cost) = p.RunHeuristic();
 
                         // save run result
                         instanceResult.Add(string.Join(' ', circuit));
@@ -74,7 +75,7 @@ namespace TspApp
             data.SaveResults(results, folderName);            
         }
 
-        private (LinkedList<uint>, uint) RunHeuristic(bool grasp = true)
+        private (LinkedList<uint>, uint) RunHeuristic()
         {
             // distances matrix            
             int rowsCount = (int) Math.Sqrt(distanceMatrix.Length);
@@ -104,7 +105,7 @@ namespace TspApp
             }
 
             // 2-opt exchange heuristic
-            if (grasp)
+            if (SEMIGREEDY_MODE == false)
             {                
                 circuitList = Opt2Swap(circuitList);
             }
@@ -168,8 +169,8 @@ namespace TspApp
                 costs[i] = distanceMatrix[currentNode, frontier[i]] + distanceMatrix[frontier[i], nextCircuitNode] - distanceMatrix[currentNode, nextCircuitNode];                
             }
 
-            // make RCL
-            var mu = 0.40;
+            // build Restricted Candidates List (RCL)
+            var mu = 0.10;
             var rclMin = costs.Min();
             var rclMax = costs.Max(); 
             var rcl = new List<uint>();
@@ -180,42 +181,57 @@ namespace TspApp
                     rcl.Add(frontier[i]);
             }
 
+            //// random extraction from RCL
+            //var candidateIdx = RNG.Next(0, rcl.Count);
+            //rcl.RemoveAll(x => x != rcl[candidateIdx]);
             return rcl;
         }
 
+
+
+        private static readonly Func<uint, uint, uint, double> PhiCost = (cn, cnn, fn) =>
+        {
+            double cost = distanceMatrix[cn, fn] + distanceMatrix[fn, cnn] - distanceMatrix[cn, cnn];            
+            return cost;
+        };
+
         private static (uint, uint) SelectNextNode(LinkedList<uint> circuit, List<uint> frontier)
         {
-            uint circuitNodeId = uint.MaxValue;
-            uint frontierNodeId = uint.MaxValue;
-            uint minimumAddCost = uint.MaxValue;
+            var globalRCL = new List<(uint, uint, double)>(circuit.Count * frontier.Count); // (circuitNode, frontierNode, phiCost)
             
-            // select a node from the circuit
+            // build RCL
             foreach (uint circuitNode in circuit) 
             {
                 uint nextCircuitNode;
                 if (circuitNode == circuit.Last.Value)
-                    nextCircuitNode = circuit.First.Value; //simulate a circular linked list
+                    nextCircuitNode = circuit.First.Value; // circular linked list
                 else
                     nextCircuitNode = circuit.Find(circuitNode).Next.Value;
 
-                // filter frontier
-                List<uint> filteredFrontier = FilterFrontier(circuitNode, nextCircuitNode, frontier);
-
-                // select a node from the frontier
-                foreach (uint ext in filteredFrontier) 
-                {                    
-                    uint extAddCost = distanceMatrix[circuitNode, ext] + distanceMatrix[ext, nextCircuitNode] - distanceMatrix[circuitNode, nextCircuitNode];
-                    if (extAddCost <= minimumAddCost)
-                    {
-                        // update best node so far
-                        minimumAddCost = extAddCost;
-                        circuitNodeId = circuitNode;
-                        frontierNodeId = ext;
-                    }
-                }                
+                // compute costs
+                foreach (uint frontierNode in frontier)
+                {
+                    var phi = PhiCost(circuitNode, nextCircuitNode, frontierNode);
+                    globalRCL.Add((circuitNode, frontierNode, phi));
+                }
             }
 
-            return (circuitNodeId, frontierNodeId);
+            // filter RCL
+            var mu = 0.01;            
+            
+            var rclMin = globalRCL.Min(t => t.Item3);
+            var rclMax = globalRCL.Max(t => t.Item3);
+            var filteredRCL = new List<(uint, uint, double)>(); // (circuitNode, frontierNode, phiCost)
+
+            for (int i = 0; i < globalRCL.Count; i++)
+            {
+                if (rclMin <= globalRCL[i].Item3 && globalRCL[i].Item3 <= (rclMin + mu * (rclMax - rclMin)))
+                    filteredRCL.Add(globalRCL[i]);
+            }           
+
+            // random extraction from RCL
+            var candidateIdx = RNG.Next(0, filteredRCL.Count);
+            return (filteredRCL[candidateIdx].Item1, filteredRCL[candidateIdx].Item2);
         }
 
         private static uint CircuitCost(LinkedList<uint> circuit)
