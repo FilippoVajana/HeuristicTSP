@@ -101,7 +101,7 @@ def boxplot_compare(costs_dict, optimus_dict):
         ax = plt.subplot(3, 4, idx)
         ax.set_title(k)
         ax.set_yticklabels([])
-        ax.boxplot(x=costs_dict[k], labels=["semigreedy", "grasp"])
+        ax.boxplot(x=costs_dict[k], labels=["no-2opt", "grasp"])
         ax.scatter(x=[1,2], y=[optimus_dict[k], optimus_dict[k]], label=f'optimum = {optimus_dict[k]}', c='red')
         idx += 1
     
@@ -111,23 +111,23 @@ def boxplot_compare(costs_dict, optimus_dict):
 
 ### CSV ###
 def get_rsq_table(costs_dict, optimus_dict):
-    data = {        
-        'best' : [],
-        'worst' : [],
-        'avg' : []}
+    data = {
+        'best' : [],       
+        '25' : [],
+        '50' : [],
+        '75' : []
+        }
 
     for inst in costs_dict.keys():
         # get optimum
-        opt = optimus_dict[inst]
-        # get min, max, avg
-        best = min(costs_dict[inst], key=lambda t: t[1])[1]
-        worst = max(costs_dict[inst], key=lambda t: t[1])[1]
-        avg = np.mean([cost for circ, cost in costs_dict[inst]])
-        # rsq        
-        data['best'].append(np.abs(best - opt) / opt * 100)
-        data['worst'].append(np.abs(worst - opt) / opt * 100)
-        data['avg'].append(np.abs(avg - opt) / opt * 100)
-        
+        opt = optimus_dict[inst]        
+        # compute rsq
+        rsq = [np.abs(c[1] - opt) / opt * 100 for c in costs_dict[inst]]
+        # get quantiles
+        data['25'].append(np.quantile(rsq, 0.25))
+        data['50'].append(np.quantile(rsq, 0.50))
+        data['75'].append(np.quantile(rsq, 0.75))
+        data['best'].append(np.min(rsq))
 
     df = pd.DataFrame(data=data, index=costs_dict.keys())
     df = df.round(2)
@@ -208,66 +208,71 @@ if __name__ == '__main__':
 
 
     ### PLOT CIRCUITS
-    try:
-        os.makedirs(CIRCUITS_PLOT_PATH)
-    except Exception:
-        pass
+    if False:
+        try:
+            os.makedirs(CIRCUITS_PLOT_PATH)
+        except Exception:
+            pass
+        
+        for k in tqdm(sorted(pos_dict.keys()), desc="Plot Circuits"):
+            fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10,10))        
+            plt.setp(ax, xticks=[], yticks=[])
+            plt.subplots_adjust(wspace=0)
 
-    for k in tqdm(sorted(pos_dict.keys()), desc="Plot Circuits"):
-        fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10,10))        
-        plt.setp(ax, xticks=[], yticks=[])
-        plt.subplots_adjust(wspace=0)
+            # get best and worst circuit        
+            best = min(res_dict[k], key=lambda t: t[1])
+            worst = max(res_dict[k], key=lambda t: t[1])
 
-        # get best and worst circuit        
-        best = min(res_dict[k], key=lambda t: t[1])
-        worst = max(res_dict[k], key=lambda t: t[1])
-
-        # plot        
-        get_circuit_ax(pos_dict[k], best, ax[0])        
-        get_circuit_ax(pos_dict[k], worst, ax[1])        
-        plt.savefig(os.path.join(CIRCUITS_PLOT_PATH, f"{k}.png"), arr=fig, format='png', bbox_inches='tight')
+            # plot        
+            get_circuit_ax(pos_dict[k], best, ax[0])        
+            get_circuit_ax(pos_dict[k], worst, ax[1])        
+            plt.savefig(os.path.join(CIRCUITS_PLOT_PATH, f"{k}.png"), arr=fig, format='png', bbox_inches='tight')
     
     
     ### PLOT STATS
-    try:
-        os.makedirs(STATS_PLOT_PATH)
-    except Exception:
-        pass
-    
-    for k in tqdm(sorted(res_dict.keys()), desc="Plot Stats"):
-        costs = [c for (circuit, c) in res_dict[k]]
-        fig = get_cost_fig(costs, OPTIMUM[k], k)
-        plt.savefig(os.path.join(STATS_PLOT_PATH, f"{k}.png"), arr=fig, format='png', bbox_inches='tight')
+    if False:
+        try:
+            os.makedirs(STATS_PLOT_PATH)
+        except Exception:
+            pass
+
+        for k in tqdm(sorted(res_dict.keys()), desc="Plot Stats"):
+            costs = [c for (circuit, c) in res_dict[k]]
+            fig = get_cost_fig(costs, OPTIMUM[k], k)
+            plt.savefig(os.path.join(STATS_PLOT_PATH, f"{k}.png"), arr=fig, format='png', bbox_inches='tight')
 
 
     ### RSQ
-    df = get_rsq_table(res_dict, OPTIMUM)
-    df.to_csv(os.path.join(BENCHMARK_RESULTS_PATH, 'rsq.csv'))
+    if True:
+        df = get_rsq_table(res_dict, OPTIMUM)
+        df.to_csv(os.path.join(BENCHMARK_RESULTS_PATH, 'rsq.csv'))       
 
     
     ### BOXPLOT COMPARISON
-    semigreedy_results_dict = get_solutions("./data/results/semigreedy")
-    grasp_results_dict = get_solutions("./data/results/grasp-rcl")
-    # merge dicts (semigreedy, grasp)
-    bench_results_dict = dict()
-    for k in semigreedy_results_dict.keys():
-        semigreedy = [c for (p,c) in semigreedy_results_dict[k]]
-        grasp = [c for (p,c) in grasp_results_dict[k]]
-        bench_results_dict[k] = (semigreedy, grasp)
-    # plot boxplots
-    fig = boxplot_compare(bench_results_dict, OPTIMUM)
-    plt.savefig(os.path.join("./data/results/grasp-rcl", "boxplot_compare.png"), arr=fig, format='png', bbox_inches='tight')
+    if False:
+        semigreedy_results_dict = get_solutions("./data/results/semigreedy")
+        grasp_results_dict = get_solutions("./data/results/grasp-rcl")
+        # merge dicts (semigreedy, grasp)
+        bench_results_dict = dict()
+        for k in semigreedy_results_dict.keys():
+            semigreedy = [c for (p,c) in semigreedy_results_dict[k]]
+            grasp = [c for (p,c) in grasp_results_dict[k]]
+            bench_results_dict[k] = (semigreedy, grasp)
+        # plot boxplots
+        fig = boxplot_compare(bench_results_dict, OPTIMUM)
+        plt.savefig(os.path.join("./data/results/grasp-rcl", "boxplot_compare.png"), arr=fig, format='png', bbox_inches='tight')
 
 
     ### RSQ COMPARISON
-    semigreedy_results_dict = get_solutions("./data/results/semigreedy")
-    grasp_results_dict = get_solutions("./data/results/grasp-rcl")
-    # merge dicts (semigreedy, grasp)
-    bench_results_dict = dict()
-    for k in semigreedy_results_dict.keys():
-        semigreedy = [c for (p,c) in semigreedy_results_dict[k]]
-        grasp = [c for (p,c) in grasp_results_dict[k]]
-        bench_results_dict[k] = (semigreedy, grasp)
+    if False:
+        semigreedy_results_dict = get_solutions("./data/results/semigreedy")
+        grasp_results_dict = get_solutions("./data/results/grasp-rcl")
+        # merge dicts (semigreedy, grasp)
+        bench_results_dict = dict()
+        for k in semigreedy_results_dict.keys():
+            semigreedy = [c for (p,c) in semigreedy_results_dict[k]]
+            grasp = [c for (p,c) in grasp_results_dict[k]]
+            bench_results_dict[k] = (semigreedy, grasp)
 
-    df = rsq_compare(bench_results_dict, OPTIMUM)
-    df.to_csv(os.path.join("./data/results/grasp-rcl", 'rsq_compare.csv'))
+        df = rsq_compare(bench_results_dict, OPTIMUM)
+        df.to_csv(os.path.join("./data/results/grasp-rcl", 'rsq_compare.csv'))

@@ -217,15 +217,14 @@ namespace TspApp
             }
 
             // filter RCL
-            var mu = 0.01;            
-            
+            var mu = 0.01;
             var rclMin = globalRCL.Min(t => t.Item3);
             var rclMax = globalRCL.Max(t => t.Item3);
             var filteredRCL = new List<(uint, uint, double)>(); // (circuitNode, frontierNode, phiCost)
 
             for (int i = 0; i < globalRCL.Count; i++)
             {
-                if (rclMin <= globalRCL[i].Item3 && globalRCL[i].Item3 <= (rclMin + mu * (rclMax - rclMin)))
+                if (globalRCL[i].Item3 <= (rclMin + mu * (rclMax - rclMin)))
                     filteredRCL.Add(globalRCL[i]);
             }           
 
