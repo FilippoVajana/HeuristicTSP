@@ -153,42 +153,6 @@ namespace TspApp
             return bestCircuit;
         }
 
-        private static List<uint> FilterFrontier(uint currentNode, uint nextCircuitNode, List<uint> frontier)
-        {
-            // check for single node frontier
-            if (frontier.Count <= 1)
-            {
-                return frontier;
-            }
-            
-            double[] costs = new double[frontier.Count];
-
-            // compute frontier nodes insertion cost            
-            for (int i = 0; i < frontier.Count; i++)
-            {
-                costs[i] = distanceMatrix[currentNode, frontier[i]] + distanceMatrix[frontier[i], nextCircuitNode] - distanceMatrix[currentNode, nextCircuitNode];                
-            }
-
-            // build Restricted Candidates List (RCL)
-            var mu = 0.10;
-            var rclMin = costs.Min();
-            var rclMax = costs.Max(); 
-            var rcl = new List<uint>();
-
-            for (int i = 0; i < costs.Length; i++)
-            {
-                if (rclMin <= costs[i] && costs[i] <= (rclMin + mu * (rclMax - rclMin)) )
-                    rcl.Add(frontier[i]);
-            }
-
-            //// random extraction from RCL
-            //var candidateIdx = RNG.Next(0, rcl.Count);
-            //rcl.RemoveAll(x => x != rcl[candidateIdx]);
-            return rcl;
-        }
-
-
-
         private static readonly Func<uint, uint, uint, double> PhiCost = (cn, cnn, fn) =>
         {
             double cost = distanceMatrix[cn, fn] + distanceMatrix[fn, cnn] - distanceMatrix[cn, cnn];            
