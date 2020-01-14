@@ -208,7 +208,7 @@ if __name__ == '__main__':
 
 
     ### PLOT CIRCUITS
-    if False:
+    if 1:
         try:
             os.makedirs(CIRCUITS_PLOT_PATH)
         except Exception:
@@ -230,7 +230,7 @@ if __name__ == '__main__':
     
     
     ### PLOT STATS
-    if False:
+    if 1:
         try:
             os.makedirs(STATS_PLOT_PATH)
         except Exception:
@@ -243,13 +243,13 @@ if __name__ == '__main__':
 
 
     ### RSQ
-    if True:
+    if 1:
         df = get_rsq_table(res_dict, OPTIMUM)
         df.to_csv(os.path.join(BENCHMARK_RESULTS_PATH, 'rsq.csv'))       
 
     
     ### BOXPLOT COMPARISON
-    if False:
+    if 1:
         semigreedy_results_dict = get_solutions("./data/results/semigreedy")
         grasp_results_dict = get_solutions("./data/results/grasp-rcl")
         # merge dicts (semigreedy, grasp)
@@ -264,7 +264,7 @@ if __name__ == '__main__':
 
 
     ### RSQ COMPARISON
-    if False:
+    if 1:
         semigreedy_results_dict = get_solutions("./data/results/semigreedy")
         grasp_results_dict = get_solutions("./data/results/grasp-rcl")
         # merge dicts (semigreedy, grasp)

@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Diagnostics;
 using System.IO;
-using System.Threading.Tasks;
 using ShellProgressBar;
 
 namespace TspApp
@@ -68,11 +66,14 @@ namespace TspApp
                 
                 // add instance results to the overall results dictionary
                 results.Add(instanceName, instanceResult);                
-            }            
-            
+            }
+
             // save overall results
-            string folderName = $"{DateTime.Now.Day}{DateTime.Now.Hour}{DateTime.Now.Minute}";
-            data.SaveResults(results, folderName);            
+            if (true)
+            {
+                string folderName = $"{DateTime.Now.Day}{DateTime.Now.Hour}{DateTime.Now.Minute}";
+                data.SaveResults(results, folderName);             
+            }
         }
 
         private (LinkedList<uint>, uint) RunHeuristic()
